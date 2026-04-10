@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <meta name="theme-color" content="#0f172a">
+    <meta name="description" content="Dökümhane Üretim ve Fire Analiz Panosu">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Dökümhane">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    
+    <title>Dökümhane Prosesi - Performans Panosu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { slate: { 850: '#172033' } }, fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] } } }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
+        .hero-gradient { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0f172a 100%); }
+        
+        .searchable-select { position: relative; }
+        .searchable-select .search-input { width: 100%; padding: 0.5rem 0.75rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.5rem; font-size: 0.875rem; outline: none; }
+        .searchable-select .search-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+        .searchable-select .dropdown-list { position: absolute; top: 100%; left: 0; right: 0; max-height: 200px; overflow-y: auto; background: white; border: 1px solid #e2e8f0; border-radius: 0.5rem; margin-top: 4px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 100; display: none; }
+        .searchable-select .dropdown-list.open { display: block; }
+        .searchable-select .dropdown-item { padding: 0.5rem 0.75rem; cursor: pointer; font-size: 0.875rem; }
+        .searchable-select .dropdown-item:hover { background: #eff6ff; }
+        
+        .fason-entry { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1rem; position: relative; margin-bottom: 0.75rem; }
+        .fason-entry .remove-btn { position: absolute; top: 0.5rem; right: 0.5rem; width: 24px; height: 24px; border-radius: 50%; background: #fee2e2; color: #ef4444; border: none; font-weight: 700; cursor: pointer; }
+        .fason-entry select, .fason-entry input { font-size: 0.8125rem; padding: 0.4rem 0.5rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; width: 100%; outline: none; }
+        .fason-entry label { display: block; font-size: 0.65rem; font-weight: 700; color: #475569; margin-bottom: 0.125rem; text-transform: uppercase; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen pb-10">
+
+<div class="hero-gradient text-white shadow-lg">
+    <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-400 to-red-600 flex items-center justify-center shadow-lg">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight">Dökümhane Proses Analizi</h1>
+                    <p class="text-slate-300 text-sm">Üretim, Fire ve Makine Duruş Takibi</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <div id="lastUpdate" class="text-slate-400 text-xs"></div>
+                <button onclick="fetchAllData()" class="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-sm font-medium transition border border-white/20">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    Yenile
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8 -mt-6 relative z-10">
+    <div id="error-msg" class="hidden bg-red-500/90 backdrop-blur text-white px-5 py-3 rounded-2xl mb-6 shadow-lg flex items-center gap-3">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+        <span id="error-text">Veri çekilemedi. Bağlantıyı kontrol edin.</span>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm p-4 mb-6 border border-slate-200">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+            <div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Başlangıç</label><input type="date" id="startDate" onchange="updateDashboard()" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none"></div>
+            <div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Bitiş</label><input type="date" id="endDate" onchange="updateDashboard()" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none"></div>
+            <button onclick="resetFilters()" class="px-5 py-2.5 bg-slate-800 text-white rounded-xl text-sm font-medium">Filtreyi Temizle</button>
+        </div>
+    </div>
+
+    <div class="mb-6">
+        <h2 class="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
+            <span class="relative flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span></span>
+            Kritik Müdahale (En Yüksek Fire Veren 3 Makine)
+        </h2>
+        <div id="alertsContainer" class="grid grid-cols-1 sm:grid-cols-3 gap-4"></div>
+    </div>
+
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+        <div class="bg-white rounded-2xl p-4 sm:p-5 border-l-4 border-blue-500 shadow-sm"><p class="text-xs font-bold text-slate-500 uppercase mb-1">Toplam Üretim</p><p class="text-3xl font-black text-slate-800" id="statTotalProd">0</p></div>
+        <div class="bg-white rounded-2xl p-4 sm:p-5 border-l-4 border-red-500 shadow-sm flex justify-between items-end"><div><p class="text-xs font-bold text-slate-500 uppercase mb-1">Toplam Fire</p><p class="text-3xl font-black text-red-600" id="statTotalFire">0</p></div><span class="text-sm font-bold text-red-500 mb-1" id="statFireRate">%0</span></div>
+        <div class="bg-white rounded-2xl p-4 sm:p-5 border-l-4 border-orange-500 shadow-sm flex justify-between items-end"><div><p class="text-xs font-bold text-slate-500 uppercase mb-1">Toplam Duruş</p><p class="text-3xl font-black text-orange-600" id="statTotalDurus">0</p></div><span class="text-sm font-bold text-slate-500 mb-1">Dk</span></div>
+        <div class="bg-white rounded-2xl p-4 sm:p-5 border-l-4 border-emerald-500 shadow-sm"><p class="text-xs font-bold text-slate-500 uppercase mb-1">Aktif Çalışan</p><p class="text-3xl font-black text-emerald-600" id="statWorkers">0</p></div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="bg-white rounded-2xl border border-slate-200"><div class="px-5 py-4 border-b bg-slate-50"><h3 class="font-bold text-slate-800 text-sm">Vardiya Dağılımı</h3></div><div class="p-5 max-h-[300px] overflow-y-auto" id="shiftContainer"></div></div>
+        <div class="bg-white rounded-2xl border border-slate-200"><div class="px-5 py-4 border-b bg-slate-50 flex justify-between"><h3 class="font-bold text-slate-800 text-sm">Neden / Arıza</h3><span id="totalReasonsCountBadge" class="text-xs font-bold text-orange-600 bg-orange-100 px-2 py-1 rounded-md"></span></div><div class="p-5 max-h-[300px] overflow-y-auto" id="reasonsContainer"></div></div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="bg-white rounded-2xl border border-slate-200"><div class="px-5 py-4 border-b bg-slate-50"><h3 class="font-bold text-slate-800 text-sm">Fason Performansları</h3></div><div class="max-h-80 overflow-y-auto"><table class="w-full text-sm"><thead class="bg-slate-100 sticky top-0"><tr><th class="px-5 py-3 text-left">FASON</th><th class="px-5 py-3 text-right">ÜRETİM</th><th class="px-5 py-3 text-right">FİRE</th></tr></thead><tbody id="machineTable" class="divide-y divide-slate-100"></tbody></table></div></div>
+        <div class="bg-white rounded-2xl border border-slate-200"><div class="px-5 py-4 border-b bg-slate-50"><h3 class="font-bold text-slate-800 text-sm">Çalışan Performansları</h3></div><div class="max-h-80 overflow-y-auto"><table class="w-full text-sm"><thead class="bg-slate-100 sticky top-0"><tr><th class="px-5 py-3 text-left">ÇALIŞAN</th><th class="px-5 py-3 text-right">ÜRETİM</th><th class="px-5 py-3 text-right">FİRE</th></tr></thead><tbody id="employeeTable" class="divide-y divide-slate-100"></tbody></table></div></div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-200 mb-6">
+        <div class="px-5 py-4 border-b bg-slate-50 flex flex-wrap justify-between items-center gap-4">
+            <h3 class="font-bold text-slate-800 text-sm">Detaylı Kayıtlar (<span id="dailyCount">0</span>)</h3>
+            <button onclick="openModal()" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md">+ Yeni Kayıt Ekle</button>
+        </div>
+        <div class="overflow-x-auto max-h-[400px] overflow-y-auto">
+            <table class="w-full text-sm min-w-[900px]">
+                <thead class="bg-slate-100 sticky top-0 z-10"><tr><th class="px-4 py-3 text-left">Tarih</th><th class="px-4 py-3 text-left">Makine & Vardiya</th><th class="px-4 py-3 text-left">Çalışan</th><th class="px-4 py-3 text-left">Fason</th><th class="px-4 py-3 text-right">Üretim</th><th class="px-4 py-3 text-right">Fire</th><th class="px-4 py-3 text-left">Neden/Arıza</th><th class="px-4 py-3 text-right">Duruş</th></tr></thead>
+                <tbody id="dailyTable" class="divide-y divide-slate-100"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="loadingModal" class="fixed inset-0 z-[60] hidden bg-slate-900/70 backdrop-blur-sm flex items-center justify-center"><div class="bg-white rounded-2xl p-8 flex flex-col items-center"><div class="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div><p class="mt-4 font-bold text-lg">İşleniyor...</p></div></div>
+<div id="successModal" class="fixed inset-0 z-[60] hidden bg-slate-900/70 backdrop-blur-sm flex items-center justify-center"><div class="bg-white rounded-2xl p-8 flex flex-col items-center"><div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center"><svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg></div><p class="mt-4 font-bold text-lg">Başarıyla Kaydedildi!</p></div></div>
+
+<div id="addRecordModal" class="fixed inset-0 z-50 hidden">
+    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeModal()"></div>
+    <div class="fixed inset-0 z-10 overflow-y-auto flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl w-full max-w-2xl shadow-xl">
+            <form id="recordForm" onsubmit="submitForm(event)">
+                <div class="bg-slate-50 px-6 py-5 rounded-t-2xl border-b flex justify-between items-center"><h3 class="text-xl font-bold">Yeni Üretim Dosyası</h3><button type="button" onclick="closeModal()" class="text-slate-400 text-2xl">&times;</button></div>
+                
+                <div class="p-6 grid grid-cols-2 gap-4 border-b">
+                    <div><label class="block text-sm font-bold mb-1">Tarih</label><input type="date" id="formTarih" required class="w-full px-3 py-2 border rounded-lg"></div>
+                    <div><label class="block text-sm font-bold mb-1">Vardiya</label><select id="formVardiya" required class="w-full px-3 py-2 border rounded-lg"></select></div>
+                    <div><label class="block text-sm font-bold mb-1">Makine</label><select id="formMakine" required class="w-full px-3 py-2 border rounded-lg"></select></div>
+                    <div><label class="block text-sm font-bold mb-1">Çalışan</label>
+                        <div class="searchable-select" id="calisanSelectWrapper">
+                            <input type="text" id="formCalisanSearch" placeholder="Çalışan ara..." class="search-input" autocomplete="off">
+                            <input type="hidden" id="formCalisan" required>
+                            <div class="dropdown-list" id="calisanDropdown"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-6">
+                    <div class="flex justify-between mb-4"><h4 class="font-bold">Fason Kalemleri</h4><button type="button" onclick="addFasonRow()" class="text-blue-600 font-bold bg-blue-50 px-3 py-1 rounded-lg">+ Fason Ekle</button></div>
+                    <div id="fasonContainer" class="max-h-[35vh] overflow-y-auto pr-2"></div>
+                </div>
+
+                <div class="bg-slate-50 px-6 py-4 rounded-b-2xl flex justify-end gap-3 border-t">
+                    <button type="button" onclick="closeModal()" class="px-6 py-2 border rounded-xl font-bold bg-white">İptal</button>
+                    <button type="submit" id="submitBtn" class="px-6 py-2 bg-blue-600 text-white rounded-xl font-bold">Kaydet ve Gönder</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// =========================================================================
+// 1. AYARLAR
+// =========================================================================
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw-NA_G5DnTePaps6Sz3dAsb13xxEVM2VHOvYwCmTCVUrRRxCe6jnJVJ3xSrneol2az/exec"; 
+const SHEET_ID = "https://docs.google.com/spreadsheets/d/1jm3uOa4Fi2MEl7wFZzzGGtYXneqWxAOaAOaY3KHx7ho/edit?usp=sharing"; 
+
+const URL_ANA_FORM = `https://opensheet.elk.sh/${SHEET_ID}/1`;
+const URL_DETAYLAR = `https://opensheet.elk.sh/${SHEET_ID}/2`;
+const URL_SABITLER = `https://opensheet.elk.sh/${SHEET_ID}/3`;
+
+let joinedData = []; 
+let constantsList = { calisanlar: [], vardiyalar: [], makineler: [], fasonlar: [], renkler: [], hatalar: [], arizalar: [] };
+let fasonCounter = 0;
+
+// Service Worker Kaydı (PWA İçin)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js')
+      .then(reg => console.log('Service Worker aktif.', reg.scope))
+      .catch(err => console.log('Service Worker hatası:', err));
+  });
+}
+
+// =========================================================================
+// 2. VERİ ÇEKME VE İŞLEME
+// =========================================================================
+async function fetchAllData() {
+    document.getElementById("error-msg").classList.add("hidden");
+    try {
+        const [anaFormRes, detaylarRes, sabitlerRes] = await Promise.all([ fetch(URL_ANA_FORM), fetch(URL_DETAYLAR), fetch(URL_SABITLER) ]);
+        const masterData = await anaFormRes.json(); const detailData = await detaylarRes.json(); const constantsData = await sabitlerRes.json();
+        processConstants(constantsData); processJoinedData(masterData, detailData);
+    } catch (error) { document.getElementById("error-msg").classList.remove("hidden"); }
+}
+
+function processConstants(data) {
+    const sets = { calisanlar: new Set(), vardiyalar: new Set(), makineler: new Set(), fasonlar: new Set(), renkler: new Set(), hatalar: new Set(), arizalar: new Set() };
+    data.forEach(row => {
+        if(row['Çalışanlar']) sets.calisanlar.add(row['Çalışanlar']); if(row['Vardiya']) sets.vardiyalar.add(row['Vardiya']);
+        if(row['Makineler']) sets.makineler.add(row['Makineler']); if(row['Fasonlar']) sets.fasonlar.add(row['Fasonlar']);
+        if(row['Renk']) sets.renkler.add(row['Renk']); if(row['Hata Nedenleri']) sets.hatalar.add(row['Hata Nedenleri']);
+        if(row['Arıza Türleri']) sets.arizalar.add(row['Arıza Türleri']);
+    });
+    constantsList = { calisanlar: [...sets.calisanlar].sort(), vardiyalar: [...sets.vardiyalar].sort(), makineler: [...sets.makineler].sort(), fasonlar: [...sets.fasonlar].sort(), renkler: [...sets.renkler].sort(), hatalar: [...sets.hatalar].sort(), arizalar: [...sets.arizalar].sort() };
+    populateDropdowns();
+}
+
+function processJoinedData(master, detail) {
+    joinedData = [];
+    detail.forEach(det => {
+        const mas = master.find(m => m["Form ID"] === det["Bağlı Form ID"]);
+        if (mas) {
+            joinedData.push({
+                tarih: mas["Tarih"], dateObj: new Date(mas["Tarih"]), vardiya: mas["Vardiya"], makine: mas["Makine"], calisan: mas["Çalışan"], fason: det["Fason Kodu"], renk: det["Renk"], uretim: parseInt(det["Üretilen Adet"]) || 0, fire: parseInt(det["Fire Adedi"]) || 0, neden: det["Fire Nedeni"] || "-", ariza: det["Arıza Türü"] || "-", durus: parseInt(det["Duruş Süresi (Dk)"]) || parseInt(det["Duruş Süresi"]) || 0
+            });
+        }
+    });
+    setInitialDates(); updateDashboard();
+    document.getElementById("lastUpdate").innerText = "Son güncelleme: " + new Date().toLocaleTimeString("tr-TR");
+}
+
+function setInitialDates() {
+    const validDates = joinedData.map(d => d.dateObj).filter(d => !isNaN(d));
+    if (validDates.length > 0) {
+        const maxDate = new Date(Math.max(...validDates)); const minDate = new Date(maxDate); minDate.setDate(minDate.getDate() - 30);
+        document.getElementById('startDate').value = minDate.toISOString().split('T')[0]; document.getElementById('endDate').value = maxDate.toISOString().split('T')[0];
+    }
+}
+function resetFilters() { setInitialDates(); updateDashboard(); }
+
+// =========================================================================
+// 3. DASHBOARD GÜNCELLEME
+// =========================================================================
+function updateDashboard() {
+    const startInput = document.getElementById('startDate').value; const endInput = document.getElementById('endDate').value;
+    let start = startInput ? new Date(startInput) : new Date('1900-01-01'); let end = endInput ? new Date(endInput) : new Date('2100-01-01'); end.setHours(23, 59, 59);
+    let filtered = joinedData.filter(d => d.dateObj >= start && d.dateObj <= end);
+
+    let totalProd = 0, totalFire = 0, totalDurus = 0; const activeWorkers = new Set();
+    const machineGroups = {}; const employeeGroups = {}; const shiftGroups = {}; const reasonGroups = {}; const fasonGroups = {};
+
+    filtered.forEach(d => {
+        totalProd += d.uretim; totalFire += d.fire; totalDurus += d.durus; if(d.calisan) activeWorkers.add(d.calisan);
+        if(!machineGroups[d.makine]) machineGroups[d.makine] = { uretim: 0, fire: 0, durus: 0 };
+        machineGroups[d.makine].uretim += d.uretim; machineGroups[d.makine].fire += d.fire; machineGroups[d.makine].durus += d.durus;
+        if(!fasonGroups[d.fason]) fasonGroups[d.fason] = { uretim: 0, fire: 0, durus: 0 };
+        fasonGroups[d.fason].uretim += d.uretim; fasonGroups[d.fason].fire += d.fire; fasonGroups[d.fason].durus += d.durus;
+        if(!employeeGroups[d.calisan]) employeeGroups[d.calisan] = { uretim: 0, fire: 0 };
+        employeeGroups[d.calisan].uretim += d.uretim; employeeGroups[d.calisan].fire += d.fire;
+        const sKey = `${d.vardiya} | ${d.makine}`; if(!shiftGroups[sKey]) shiftGroups[sKey] = { uretim: 0, fire: 0 };
+        shiftGroups[sKey].uretim += d.uretim; shiftGroups[sKey].fire += d.fire;
+        if(d.neden && d.neden !== "-" && d.neden.toLowerCase() !== "yok") reasonGroups[d.neden] = (reasonGroups[d.neden] || 0) + d.fire;
+        if(d.ariza && d.ariza !== "-" && d.ariza.toLowerCase() !== "yok") reasonGroups[d.ariza] = (reasonGroups[d.ariza] || 0) + 1;
+    });
+
+    document.getElementById('statTotalProd').innerText = totalProd.toLocaleString('tr-TR'); document.getElementById('statTotalFire').innerText = totalFire.toLocaleString('tr-TR');
+    document.getElementById('statTotalDurus').innerText = totalDurus.toLocaleString('tr-TR'); document.getElementById('statWorkers').innerText = activeWorkers.size;
+    document.getElementById('statFireRate').innerText = totalProd > 0 ? "%" + ((totalFire / totalProd) * 100).toFixed(2) : "%0";
+
+    const alertsContainer = document.getElementById('alertsContainer'); alertsContainer.innerHTML = '';
+    const sortedMachines = Object.keys(machineGroups).map(k => ({ makine: k, fire: machineGroups[k].fire, uretim: machineGroups[k].uretim })).filter(m => m.fire > 0).sort((a,b) => b.fire - a.fire).slice(0, 3);
+    if(sortedMachines.length === 0) { alertsContainer.innerHTML = `<div class="col-span-3 bg-emerald-50 text-emerald-700 p-4 rounded-xl text-sm font-medium">✅ Seçili tarihlerde fire kaydedilmedi.</div>`; } 
+    else { sortedMachines.forEach((m, i) => {
+        const oran = m.uretim > 0 ? ((m.fire / m.uretim) * 100).toFixed(1) : 0;
+        alertsContainer.innerHTML += `<div class="bg-red-50 border border-red-200 rounded-xl p-4 relative overflow-hidden"><div class="absolute top-0 right-0 bg-red-500 text-white text-xs font-black px-2 py-1 rounded-bl-lg">#${i + 1}</div><h4 class="text-lg font-black text-red-900 mb-2 truncate">${m.makine}</h4><div class="flex justify-between items-end"><div><p class="text-2xl font-black text-red-600">${m.fire}</p><p class="text-xs text-red-400">Fire</p></div><div class="text-right"><p class="text-lg font-bold text-red-500">%${oran}</p><p class="text-xs text-red-400">Oran</p></div></div></div>`;
+    });}
+
+    const shiftContainer = document.getElementById('shiftContainer'); shiftContainer.innerHTML = ''; let maxShift = 0; Object.values(shiftGroups).forEach(s => { if(s.fire > maxShift) maxShift = s.fire; });
+    Object.keys(shiftGroups).sort().forEach(s => { const { uretim, fire } = shiftGroups[s]; const barW = maxShift > 0 ? (fire / maxShift) * 100 : 0;
+        shiftContainer.innerHTML += `<div class="mb-3"><div class="flex justify-between text-xs mb-1"><span class="font-bold">${s}</span><span class="text-red-500 font-bold">Fire: ${fire}</span></div><div class="w-full bg-slate-100 rounded-full h-2"><div class="bg-indigo-500 h-2 rounded-full" style="width: ${barW}%"></div></div></div>`;
+    });
+
+    const reasonsContainer = document.getElementById('reasonsContainer'); reasonsContainer.innerHTML = ''; const sortedReasons = Object.keys(reasonGroups).map(k => ({ neden: k, adet: reasonGroups[k] })).sort((a,b) => b.adet - a.adet); document.getElementById('totalReasonsCountBadge').innerText = sortedReasons.length + " Farklı Tespit";
+    sortedReasons.forEach((r, i) => { const barW = (r.adet / sortedReasons[0].adet) * 100;
+        reasonsContainer.innerHTML += `<div class="flex items-center gap-2 mb-3"><div class="w-5 text-xs text-slate-400">${i+1}.</div><div class="flex-1"><div class="flex justify-between text-xs mb-1"><span class="font-bold">${r.neden}</span><span class="text-orange-600 font-bold">${r.adet}</span></div><div class="w-full bg-slate-100 rounded-full h-1.5"><div class="bg-orange-400 h-1.5 rounded-full" style="width: ${barW}%"></div></div></div></div>`;
+    });
+
+    const mTable = document.getElementById('machineTable'); mTable.innerHTML = '';
+    Object.keys(fasonGroups).sort().forEach(k => { mTable.innerHTML += `<tr><td class="px-5 py-2 font-medium">${k}</td><td class="px-5 py-2 text-right font-bold">${fasonGroups[k].uretim}</td><td class="px-5 py-2 text-right text-red-500 font-bold">${fasonGroups[k].fire}</td></tr>`; });
+
+    const eTable = document.getElementById('employeeTable'); eTable.innerHTML = '';
+    Object.keys(employeeGroups).sort((a,b) => employeeGroups[b].uretim - employeeGroups[a].uretim).forEach(k => { eTable.innerHTML += `<tr><td class="px-5 py-2 font-medium">${k}</td><td class="px-5 py-2 text-right font-bold">${employeeGroups[k].uretim}</td><td class="px-5 py-2 text-right text-red-500 font-bold">${employeeGroups[k].fire}</td></tr>`; });
+
+    const dTable = document.getElementById('dailyTable'); dTable.innerHTML = ''; let sortedFiltered = [...filtered].sort((a,b) => b.dateObj - a.dateObj);
+    sortedFiltered.forEach(d => { dTable.innerHTML += `<tr><td class="px-4 py-2">${d.tarih}</td><td class="px-4 py-2"><span class="font-bold">${d.makine}</span> <span class="text-xs text-slate-400">(${d.vardiya})</span></td><td class="px-4 py-2">${d.calisan}</td><td class="px-4 py-2">${d.fason} <span class="text-xs text-slate-400">(${d.renk || '-'})</span></td><td class="px-4 py-2 text-right font-bold">${d.uretim}</td><td class="px-4 py-2 text-right font-bold text-red-500">${d.fire > 0 ? d.fire : '-'}</td><td class="px-4 py-2 text-xs text-orange-600">${d.neden !== "-" ? d.neden : (d.ariza !== "-" ? d.ariza : '')}</td><td class="px-4 py-2 text-right">${d.durus > 0 ? d.durus+' dk' : '-'}</td></tr>`; });
+    document.getElementById("dailyCount").innerText = sortedFiltered.length;
+}
+
+// =========================================================================
+// 4. FORM VE MODAL
+// =========================================================================
+function populateDropdowns() {
+    const fill = (id, arr) => { const el = document.getElementById(id); el.length = 1; arr.forEach(i => el.add(new Option(i, i))); };
+    fill("formVardiya", constantsList.vardiyalar); fill("formMakine", constantsList.makineler);
+    const dropdown = document.getElementById("calisanDropdown"); dropdown.innerHTML = '';
+    constantsList.calisanlar.forEach(item => { const div = document.createElement("div"); div.className = "dropdown-item"; div.textContent = item; div.onclick = () => { document.getElementById("formCalisanSearch").value = item; document.getElementById("formCalisan").value = item; dropdown.classList.remove("open"); }; dropdown.appendChild(div); });
+}
+
+function addFasonRow() {
+    const c = document.getElementById("fasonContainer"); const id = fasonCounter++; const getOpts = (arr) => arr.map(i => `<option value="${i}">${i}</option>`).join('');
+    const div = document.createElement("div"); div.className = "fason-entry"; div.id = "fason_" + id;
+    div.innerHTML = `<button type="button" class="remove-btn" onclick="document.getElementById('fason_${id}').remove()">×</button><div class="grid grid-cols-2 gap-3 mb-3"><div><label>Fason Kodu</label><select class="fason-kod"><option value="">Seçiniz</option>${getOpts(constantsList.fasonlar)}</select></div><div><label>Renk</label><select class="fason-renk"><option value="">Seçiniz</option>${getOpts(constantsList.renkler)}</select></div></div><div class="grid grid-cols-2 gap-3 mb-3"><div><label>Üretilen Adet</label><input type="number" class="fason-uretim" min="1"></div><div><label>Fire Adedi</label><input type="number" class="fason-fire" min="0" value="0"></div></div><div class="grid grid-cols-3 gap-2"><div><label>Fire Nedeni</label><select class="fason-neden"><option value="Yok">Yok</option>${getOpts(constantsList.hatalar)}</select></div><div><label>Arıza Türü</label><select class="fason-ariza"><option value="Yok">Yok</option>${getOpts(constantsList.arizalar)}</select></div><div><label>Duruş (Dk)</label><input type="number" class="fason-durus" min="0" value="0"></div></div>`;
+    c.appendChild(div);
+}
+
+async function submitForm(e) {
+    e.preventDefault(); const btn = document.getElementById('submitBtn');
+    const formId = 'FRM-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+    const formData = { formId: formId, tarih: document.getElementById('formTarih').value, vardiya: document.getElementById('formVardiya').value, makine: document.getElementById('formMakine').value, calisan: document.getElementById('formCalisan').value };
+    if(!formData.calisan) return alert("Çalışan seçin!");
+
+    const fasonlar = [];
+    document.querySelectorAll(".fason-entry").forEach(row => {
+        const uretim = parseInt(row.querySelector(".fason-uretim").value) || 0;
+        if(uretim > 0) fasonlar.push({ detayId: 'D-' + Math.random().toString(36).substr(2, 6).toUpperCase(), formId: formId, fasonKodu: row.querySelector(".fason-kod").value, renk: row.querySelector(".fason-renk").value, uretim: uretim, fire: parseInt(row.querySelector(".fason-fire").value) || 0, fireNedeni: row.querySelector(".fason-neden").value, arizaTuru: row.querySelector(".fason-ariza").value, durus: parseInt(row.querySelector(".fason-durus").value) || 0 });
+    });
+    if(fasonlar.length === 0) return alert("Fason girin.");
+
+    btn.innerText = "Gönderiliyor..."; btn.disabled = true; document.getElementById('loadingModal').classList.remove('hidden');
+    try {
+        const res = await fetch(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ formData: formData, fasonlar: fasonlar }) });
+        const data = await res.json();
+        if(data.status === "success") { document.getElementById('loadingModal').classList.add('hidden'); document.getElementById('successModal').classList.remove('hidden'); setTimeout(() => { document.getElementById('successModal').classList.add('hidden'); closeModal(); fetchAllData(); }, 1500); } 
+        else throw new Error(data.message);
+    } catch (err) { document.getElementById('loadingModal').classList.add('hidden'); alert("Hata: " + err.message); } 
+    finally { btn.innerText = "Kaydet ve Gönder"; btn.disabled = false; }
+}
+
+function openModal() { document.getElementById('addRecordModal').classList.remove('hidden'); document.getElementById('formTarih').valueAsDate = new Date(); document.getElementById("fasonContainer").innerHTML = ''; addFasonRow(); }
+function closeModal() { document.getElementById('addRecordModal').classList.add('hidden'); document.getElementById('recordForm').reset(); document.getElementById('formCalisanSearch').value = ''; document.getElementById('formCalisan').value = ''; }
+
+document.getElementById("formCalisanSearch").addEventListener("focus", function() { const val = this.value.toUpperCase(); document.querySelectorAll("#calisanDropdown .dropdown-item").forEach(i => i.style.display = i.textContent.toUpperCase().includes(val) ? "block" : "none"); document.getElementById("calisanDropdown").classList.add("open"); });
+document.getElementById("formCalisanSearch").addEventListener("input", function() { const val = this.value.toUpperCase(); document.querySelectorAll("#calisanDropdown .dropdown-item").forEach(i => i.style.display = i.textContent.toUpperCase().includes(val) ? "block" : "none"); });
+document.addEventListener("click", e => { if (!document.getElementById("calisanSelectWrapper").contains(e.target)) document.getElementById("calisanDropdown").classList.remove("open"); });
+
+window.onload = fetchAllData;
+</script>
+</body>
+</html>
