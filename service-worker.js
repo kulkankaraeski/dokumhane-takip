@@ -1,5 +1,5 @@
-const CACHE_NAME = 'dokumhane-v1';
-const DATA_CACHE_NAME = 'dokumhane-data-v1';
+const CACHE_NAME = 'dokumhane-v2';
+const DATA_CACHE_NAME = 'dokumhane-data-v2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
