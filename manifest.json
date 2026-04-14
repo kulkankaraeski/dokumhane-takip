@@ -4,9 +4,12 @@
   "description": "Dökümhane üretim, fire ve makine duruş takip sistemi.",
   "start_url": "./index.html",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
   "background_color": "#0f172a",
   "theme_color": "#1e3a8a",
   "orientation": "portrait",
+  "lang": "tr",
+  "categories": ["productivity", "business"],
   "icons": [
     {
       "src": "icon-192.png",
