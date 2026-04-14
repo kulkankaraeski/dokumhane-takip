@@ -161,7 +161,7 @@
 // 1. AYARLAR
 // =========================================================================
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw-NA_G5DnTePaps6Sz3dAsb13xxEVM2VHOvYwCmTCVUrRRxCe6jnJVJ3xSrneol2az/exec"; 
-const SHEET_ID = "https://docs.google.com/spreadsheets/d/1jm3uOa4Fi2MEl7wFZzzGGtYXneqWxAOaAOaY3KHx7ho/edit?usp=sharing"; 
+const SHEET_ID = "1jm3uOa4Fi2MEl7wFZzzGGtYXneqWxAOaAOaY3KHx7ho"; 
 
 const URL_ANA_FORM = `https://opensheet.elk.sh/${SHEET_ID}/1`;
 const URL_DETAYLAR = `https://opensheet.elk.sh/${SHEET_ID}/2`;
@@ -189,7 +189,11 @@ async function fetchAllData() {
         const [anaFormRes, detaylarRes, sabitlerRes] = await Promise.all([ fetch(URL_ANA_FORM), fetch(URL_DETAYLAR), fetch(URL_SABITLER) ]);
         const masterData = await anaFormRes.json(); const detailData = await detaylarRes.json(); const constantsData = await sabitlerRes.json();
         processConstants(constantsData); processJoinedData(masterData, detailData);
-    } catch (error) { document.getElementById("error-msg").classList.remove("hidden"); }
+    } catch (error) { 
+        // İleride hata olursa konsoldan sebebini görebilmeniz için logluyoruz:
+        console.error("Veri çekme hatası:", error); 
+        document.getElementById("error-msg").classList.remove("hidden"); 
+    }
 }
 
 function processConstants(data) {

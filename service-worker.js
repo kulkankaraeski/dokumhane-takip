@@ -27,6 +27,8 @@ self.addEventListener('activate', event => {
       );
     })
   );
+  // Service Worker güncellendiğinde uygulamanın beklemeyip hemen kontrolü almasını sağlar
+  self.clients.claim();
 });
 
 self.addEventListener('fetch', event => {
@@ -49,7 +51,13 @@ self.addEventListener('fetch', event => {
           return networkResponse;
         }).catch(() => {
           // Ağ isteği başarısız oldu, önbellekten sunmayı dene.
-          return cache.match(event.request);
+          return cache.match(event.request).then(cachedResponse => {
+            if (cachedResponse) {
+              return cachedResponse;
+            }
+            // Önbellekte de veri yoksa hata fırlat (index.html'deki hata mesajını tetiklemek için)
+            throw new Error('İnternet bağlantısı yok ve önbellek boş.');
+          });
         });
       })
     );
