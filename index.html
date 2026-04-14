@@ -189,10 +189,16 @@ async function fetchAllData() {
     try {
         const [anaFormRes, detaylarRes, sabitlerRes] = await Promise.all([ fetch(URL_ANA_FORM), fetch(URL_DETAYLAR), fetch(URL_SABITLER) ]);
         const masterData = await anaFormRes.json(); const detailData = await detaylarRes.json(); const constantsData = await sabitlerRes.json();
+        
+        if (masterData.error) throw new Error("Ana Form sekmesi hatası: " + masterData.error);
+        if (detailData.error) throw new Error("Detaylar sekmesi hatası: " + detailData.error);
+        if (constantsData.error) throw new Error("Sabitler sekmesi hatası: " + constantsData.error);
+
         processConstants(constantsData); processJoinedData(masterData, detailData);
     } catch (error) { 
         // İleride hata olursa konsoldan sebebini görebilmeniz için logluyoruz:
         console.error("Veri çekme hatası:", error); 
+        document.getElementById("error-text").innerText = "Bağlantı Hatası: " + error.message + " (Sayfa gizli olabilir veya sekme adları eşleşmiyor)";
         document.getElementById("error-msg").classList.remove("hidden"); 
     }
 }
