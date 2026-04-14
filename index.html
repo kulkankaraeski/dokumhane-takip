@@ -131,8 +131,8 @@
                 
                 <div class="p-6 grid grid-cols-2 gap-4 border-b">
                     <div><label class="block text-sm font-bold mb-1">Tarih</label><input type="date" id="formTarih" required class="w-full px-3 py-2 border rounded-lg"></div>
-                    <div><label class="block text-sm font-bold mb-1">Vardiya</label><select id="formVardiya" required class="w-full px-3 py-2 border rounded-lg"></select></div>
-                    <div><label class="block text-sm font-bold mb-1">Makine</label><select id="formMakine" required class="w-full px-3 py-2 border rounded-lg"></select></div>
+                    <div><label class="block text-sm font-bold mb-1">Vardiya</label><select id="formVardiya" required class="w-full px-3 py-2 border rounded-lg"><option value="">Seçiniz</option></select></div>
+                    <div><label class="block text-sm font-bold mb-1">Makine</label><select id="formMakine" required class="w-full px-3 py-2 border rounded-lg"><option value="">Seçiniz</option></select></div>
                     <div><label class="block text-sm font-bold mb-1">Çalışan</label>
                         <div class="searchable-select" id="calisanSelectWrapper">
                             <input type="text" id="formCalisanSearch" placeholder="Çalışan ara..." class="search-input" autocomplete="off">
@@ -163,9 +163,9 @@
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzzIDQh3clatqONrnM7rfVLharExpPbfgGgfxBG4rh-ur7K8leA9FfuPHXDHz12k-A2/exec"; 
 const SHEET_ID = "1jm3uOa4Fi2MEl7wFZzzGGtYXneqWxAOaAOaY3KHx7ho"; 
 
-const URL_ANA_FORM = `https://opensheet.elk.sh/${SHEET_ID}/1`;
-const URL_DETAYLAR = `https://opensheet.elk.sh/${SHEET_ID}/2`;
-const URL_SABITLER = `https://opensheet.elk.sh/${SHEET_ID}/3`;
+const URL_ANA_FORM = `https://opensheet.elk.sh/${SHEET_ID}/Ana Form`;
+const URL_DETAYLAR = `https://opensheet.elk.sh/${SHEET_ID}/Detaylar`;
+const URL_SABITLER = `https://opensheet.elk.sh/${SHEET_ID}/Sabitler`;
 const OFFLINE_QUEUE_KEY = 'dokumhane_offline_queue';
 
 let joinedData = []; 
@@ -199,12 +199,28 @@ async function fetchAllData() {
 
 function processConstants(data) {
     const sets = { calisanlar: new Set(), vardiyalar: new Set(), makineler: new Set(), fasonlar: new Set(), renkler: new Set(), hatalar: new Set(), arizalar: new Set() };
-    data.forEach(row => {
-        if(row['Çalışanlar']) sets.calisanlar.add(row['Çalışanlar']); if(row['Vardiya']) sets.vardiyalar.add(row['Vardiya']);
-        if(row['Makineler']) sets.makineler.add(row['Makineler']); if(row['Fasonlar']) sets.fasonlar.add(row['Fasonlar']);
-        if(row['Renk']) sets.renkler.add(row['Renk']); if(row['Hata Nedenleri']) sets.hatalar.add(row['Hata Nedenleri']);
-        if(row['Arıza Türleri']) sets.arizalar.add(row['Arıza Türleri']);
-    });
+    if (Array.isArray(data)) {
+        data.forEach(row => {
+            const cleanRow = {};
+            for (let key in row) {
+                if (key) cleanRow[key.trim()] = row[key];
+            }
+            const calisan = cleanRow['Çalışanlar'] || cleanRow['Çalışan'] || cleanRow['Çalışan Adı'];
+            if(calisan) sets.calisanlar.add(calisan.toString().trim());
+            const vardiya = cleanRow['Vardiyalar'] || cleanRow['Vardiya'];
+            if(vardiya) sets.vardiyalar.add(vardiya.toString().trim());
+            const makine = cleanRow['Makineler'] || cleanRow['Makine'] || cleanRow['Makina'];
+            if(makine) sets.makineler.add(makine.toString().trim());
+            const fason = cleanRow['Fasonlar'] || cleanRow['Fason'] || cleanRow['Fason Kodu'];
+            if(fason) sets.fasonlar.add(fason.toString().trim());
+            const renk = cleanRow['Renkler'] || cleanRow['Renk'];
+            if(renk) sets.renkler.add(renk.toString().trim());
+            const hata = cleanRow['Hata Nedenleri'] || cleanRow['Hata Nedeni'] || cleanRow['Fire Nedeni'] || cleanRow['Fire Nedenleri'];
+            if(hata) sets.hatalar.add(hata.toString().trim());
+            const ariza = cleanRow['Arıza Türleri'] || cleanRow['Arıza Türü'] || cleanRow['Arıza'];
+            if(ariza) sets.arizalar.add(ariza.toString().trim());
+        });
+    }
     constantsList = { calisanlar: [...sets.calisanlar].sort(), vardiyalar: [...sets.vardiyalar].sort(), makineler: [...sets.makineler].sort(), fasonlar: [...sets.fasonlar].sort(), renkler: [...sets.renkler].sort(), hatalar: [...sets.hatalar].sort(), arizalar: [...sets.arizalar].sort() };
     populateDropdowns();
 }
@@ -294,7 +310,7 @@ function updateDashboard() {
 // 4. FORM VE MODAL
 // =========================================================================
 function populateDropdowns() {
-    const fill = (id, arr) => { const el = document.getElementById(id); el.length = 1; arr.forEach(i => el.add(new Option(i, i))); };
+    const fill = (id, arr) => { const el = document.getElementById(id); el.innerHTML = '<option value="">Seçiniz</option>'; arr.forEach(i => el.add(new Option(i, i))); };
     fill("formVardiya", constantsList.vardiyalar); fill("formMakine", constantsList.makineler);
     const dropdown = document.getElementById("calisanDropdown"); dropdown.innerHTML = '';
     constantsList.calisanlar.forEach(item => { const div = document.createElement("div"); div.className = "dropdown-item"; div.textContent = item; div.onclick = () => { document.getElementById("formCalisanSearch").value = item; document.getElementById("formCalisan").value = item; dropdown.classList.remove("open"); }; dropdown.appendChild(div); });
@@ -309,9 +325,27 @@ function addFasonRow() {
 
 async function submitForm(e) {
     e.preventDefault(); const btn = document.getElementById('submitBtn');
+    if (btn.disabled) return; // Çift tıklamayı engelle
+    
+    const formTarih = document.getElementById('formTarih').value;
+    const formCalisan = document.getElementById('formCalisan').value;
+    if(!formCalisan) return alert("Çalışan seçin!");
+
+    // Aynı gün, aynı kişi kontrolü (Günde sadece 1 kayıt)
+    const formatYMD = (v) => { const d = new Date(v); return isNaN(d) ? '' : `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+    const inputDate = formatYMD(formTarih);
+    
+    const hasOnlineRecord = joinedData.some(d => formatYMD(d.dateObj) === inputDate && d.calisan === formCalisan);
+    const queue = JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || '[]');
+    const hasOfflineRecord = queue.some(q => q.formData && formatYMD(q.formData.tarih) === inputDate && q.formData.calisan === formCalisan);
+    
+    if (hasOnlineRecord || hasOfflineRecord) {
+        return alert(`Dikkat: ${formCalisan} adına ${formTarih} tarihinde zaten bir kayıt oluşturulmuş. Bir personel için günde sadece bir form doldurulabilir!`);
+    }
+
+    btn.disabled = true; const originalText = btn.innerText; btn.innerText = "Gönderiliyor...";
     const formId = 'FRM-' + Math.random().toString(36).substr(2, 6).toUpperCase();
-    const formData = { formId: formId, tarih: document.getElementById('formTarih').value, vardiya: document.getElementById('formVardiya').value, makine: document.getElementById('formMakine').value, calisan: document.getElementById('formCalisan').value };
-    if(!formData.calisan) return alert("Çalışan seçin!");
+    const formData = { formId: formId, tarih: formTarih, vardiya: document.getElementById('formVardiya').value, makine: document.getElementById('formMakine').value, calisan: formCalisan };
 
     const fasonlar = [];
     document.querySelectorAll(".fason-entry").forEach(row => {
@@ -323,16 +357,16 @@ async function submitForm(e) {
             fasonlar.push({ detayId: 'D-' + Math.random().toString(36).substr(2, 6).toUpperCase(), formId: formId, fasonKodu: fasonKodu || "Belirtilmedi", renk: row.querySelector(".fason-renk").value || "-", uretim: uretim, fire: fire, fireNedeni: row.querySelector(".fason-neden").value, arizaTuru: row.querySelector(".fason-ariza").value, durus: durus }); 
         }
     });
-    if(fasonlar.length === 0) return alert("Fason girin.");
+    if(fasonlar.length === 0) { alert("Fason girin."); btn.disabled = false; btn.innerText = originalText; return; }
 
     const payload = { formData: formData, fasonlar: fasonlar };
-    btn.innerText = "Gönderiliyor..."; btn.disabled = true; document.getElementById('loadingModal').classList.remove('hidden');
+    document.getElementById('loadingModal').classList.remove('hidden');
     
     if (!navigator.onLine) {
         saveOffline(payload);
         document.getElementById('loadingModal').classList.add('hidden'); closeModal();
         alert("İnternet bağlantınız yok! Kayıt cihaza kaydedildi, bağlantı geldiğinde otomatik gönderilecek.");
-        btn.innerText = "Kaydet ve Gönder"; btn.disabled = false; return;
+        btn.innerText = originalText; btn.disabled = false; return;
     }
 
     try {
@@ -341,7 +375,7 @@ async function submitForm(e) {
         if(data.status === "success") { document.getElementById('loadingModal').classList.add('hidden'); document.getElementById('successModal').classList.remove('hidden'); setTimeout(() => { document.getElementById('successModal').classList.add('hidden'); closeModal(); fetchAllData(); }, 1500); } 
         else throw new Error(data.message);
     } catch (err) { saveOffline(payload); document.getElementById('loadingModal').classList.add('hidden'); closeModal(); alert("Sunucuya ulaşılamadı. Kayıt cihaza kaydedildi, bağlantı geldiğinde tekrar denenecek."); } 
-    finally { btn.innerText = "Kaydet ve Gönder"; btn.disabled = false; }
+    finally { btn.innerText = originalText; btn.disabled = false; }
 }
 
 function openModal() { document.getElementById('addRecordModal').classList.remove('hidden'); document.getElementById('formTarih').valueAsDate = new Date(); document.getElementById("fasonContainer").innerHTML = ''; addFasonRow(); }
