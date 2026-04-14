@@ -370,7 +370,6 @@ async function syncOfflineData() {
 }
 window.addEventListener('online', syncOfflineData);
 
-window.onload = () => { fetchAllData(); syncOfflineData(); };
 function updateOfflineBadge() {
     let queue = JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || '[]');
     const badge = document.getElementById('offlineBadge');
