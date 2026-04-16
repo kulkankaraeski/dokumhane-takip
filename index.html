@@ -172,15 +172,6 @@ let joinedData = [];
 let constantsList = { calisanlar: [], vardiyalar: [], makineler: [], fasonlar: [], renkler: [], hatalar: [], arizalar: [] };
 let fasonCounter = 0;
 
-// Service Worker Kaydı (PWA İçin)
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./service-worker.js')
-      .then(reg => console.log('Service Worker aktif.', reg.scope))
-      .catch(err => console.log('Service Worker hatası:', err));
-  });
-}
-
 // =========================================================================
 // 2. VERİ ÇEKME VE İŞLEME
 // =========================================================================
