@@ -163,9 +163,6 @@
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzzIDQh3clatqONrnM7rfVLharExpPbfgGgfxBG4rh-ur7K8leA9FfuPHXDHz12k-A2/exec"; 
 const SHEET_ID = "1jm3uOa4Fi2MEl7wFZzzGGtYXneqWxAOaAOaY3KHx7ho"; 
 
-const URL_ANA_FORM = `https://opensheet.elk.sh/${SHEET_ID}/3`;
-const URL_DETAYLAR = `https://opensheet.elk.sh/${SHEET_ID}/2`;
-const URL_SABITLER = `https://opensheet.elk.sh/${SHEET_ID}/1`;
 const OFFLINE_QUEUE_KEY = 'dokumhane_offline_queue';
 
 let joinedData = []; 
@@ -175,21 +172,54 @@ let fasonCounter = 0;
 // =========================================================================
 // 2. VERİ ÇEKME VE İŞLEME
 // =========================================================================
+async function fetchSheetData(sheetId, index, sheetName) {
+    // 1. Önce Opensheet'i (Birinci Sistem) Dene
+    try {
+        const response = await fetch(`https://opensheet.elk.sh/${sheetId}/${index}`);
+        if (!response.ok) throw new Error(`HTTP Hata ${response.status}`);
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        return data;
+    } catch (err) {
+        console.warn(`[Opensheet Kota Dolu/Başarısız] ${sheetName} sekmesi için Google Yedek Sunucusuna geçiliyor... Hata:`, err);
+    }
+    
+    // 2. Yedek Sistem: Google Visualization API (Opensheet ile tamamen bağlantısız, limitsiz)
+    try {
+        const gvizUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
+        const gvizRes = await fetch(gvizUrl);
+        const text = await gvizRes.text();
+        
+        const jsonString = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
+        const data = JSON.parse(jsonString);
+        if (data.status === 'error') throw new Error(data.errors[0].message);
+        
+        const cols = data.table.cols.map(c => c ? (c.label || c.id) : "");
+        return data.table.rows.map(row => {
+            const rowData = {};
+            row.c.forEach((cell, i) => { if (cols[i]) { rowData[cols[i]] = cell ? (cell.v !== null && typeof cell.v === 'string' && cell.v.startsWith('Date(') ? (cell.f || cell.v) : (cell.v !== null ? cell.v : "")) : ""; } });
+            return rowData;
+        });
+    } catch (err) {
+        console.error(`[Yedek Sistem de Başarısız] ${sheetName}:`, err);
+        throw new Error(`${sheetName} sekmesi çekilemedi. Tüm sunucular şu anda meşgul.`);
+    }
+}
+
 async function fetchAllData() {
     document.getElementById("error-msg").classList.add("hidden");
     try {
-        const [anaFormRes, detaylarRes, sabitlerRes] = await Promise.all([ fetch(URL_ANA_FORM), fetch(URL_DETAYLAR), fetch(URL_SABITLER) ]);
-        const masterData = await anaFormRes.json(); const detailData = await detaylarRes.json(); const constantsData = await sabitlerRes.json();
-        
-        if (masterData.error) throw new Error("Ana Form sekmesi hatası: " + masterData.error);
-        if (detailData.error) throw new Error("Detaylar sekmesi hatası: " + detailData.error);
-        if (constantsData.error) throw new Error("Sabitler sekmesi hatası: " + constantsData.error);
+        const [masterData, detailData, constantsData] = await Promise.all([ 
+            fetchSheetData(SHEET_ID, "3", "Ana Form"), 
+            fetchSheetData(SHEET_ID, "2", "Detaylar"), 
+            fetchSheetData(SHEET_ID, "1", "Sabitler") 
+        ]);
 
         processConstants(constantsData); processJoinedData(masterData, detailData);
     } catch (error) { 
         // İleride hata olursa konsoldan sebebini görebilmeniz için logluyoruz:
         console.error("Veri çekme hatası:", error); 
-        document.getElementById("error-text").innerText = "Bağlantı Hatası: " + error.message + " (Sayfa gizli olabilir veya sekme adları eşleşmiyor)";
+        document.getElementById("error-text").innerText = "Bağlantı Hatası: " + error.message;
         document.getElementById("error-msg").classList.remove("hidden"); 
     }
 }
