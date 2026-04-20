@@ -346,8 +346,16 @@ function populateDropdowns() {
 function addFasonRow() {
     const c = document.getElementById("fasonContainer"); const id = fasonCounter++; const getOpts = (arr) => arr.map(i => `<option value="${i}">${i}</option>`).join('');
     const div = document.createElement("div"); div.className = "fason-entry"; div.id = "fason_" + id;
-    div.innerHTML = `<button type="button" class="remove-btn" onclick="document.getElementById('fason_${id}').remove()">×</button><div class="grid grid-cols-2 gap-3 mb-3"><div><label>Fason Kodu</label><select class="fason-kod"><option value="">Seçiniz</option>${getOpts(constantsList.fasonlar)}</select></div><div><label>Renk</label><select class="fason-renk"><option value="">Seçiniz</option>${getOpts(constantsList.renkler)}</select></div></div><div class="grid grid-cols-2 gap-3 mb-3"><div><label>Üretilen Adet</label><input type="number" class="fason-uretim" min="1"></div><div><label>Fire Adedi</label><input type="number" class="fason-fire" min="0" value="0"></div></div><div class="grid grid-cols-3 gap-2"><div><label>Fire Nedeni</label><select class="fason-neden"><option value="Yok">Yok</option>${getOpts(constantsList.hatalar)}</select></div><div><label>Arıza Türü</label><select class="fason-ariza"><option value="Yok">Yok</option>${getOpts(constantsList.arizalar)}</select></div><div><label>Duruş (Dk)</label><input type="number" class="fason-durus" min="0" value="0"></div></div>`;
+    const fasonItems = constantsList.fasonlar.map(item => `<div class="dropdown-item fason-dropdown-item">${item}</div>`).join('');
+    div.innerHTML = `<button type="button" class="remove-btn" onclick="document.getElementById('fason_${id}').remove()">×</button><div class="grid grid-cols-2 gap-3 mb-3"><div><label>Fason Kodu</label><div class="searchable-select fason-select-wrapper" id="fasonSelectWrapper_${id}"><input type="text" class="search-input fason-search" placeholder="Fason ara..." autocomplete="off"><input type="hidden" class="fason-kod"><div class="dropdown-list fason-dropdown">${fasonItems}</div></div></div><div><label>Renk</label><select class="fason-renk"><option value="">Seçiniz</option>${getOpts(constantsList.renkler)}</select></div></div><div class="grid grid-cols-2 gap-3 mb-3"><div><label>Üretilen Adet</label><input type="number" class="fason-uretim" min="1"></div><div><label>Fire Adedi</label><input type="number" class="fason-fire" min="0" value="0"></div></div><div class="grid grid-cols-3 gap-2"><div><label>Fire Nedeni</label><select class="fason-neden"><option value="Yok">Yok</option>${getOpts(constantsList.hatalar)}</select></div><div><label>Arıza Türü</label><select class="fason-ariza"><option value="Yok">Yok</option>${getOpts(constantsList.arizalar)}</select></div><div><label>Duruş (Dk)</label><input type="number" class="fason-durus" min="0" value="0"></div></div>`;
     c.appendChild(div);
+    const searchInput = div.querySelector('.fason-search');
+    const hiddenInput = div.querySelector('.fason-kod');
+    const dropdown = div.querySelector('.fason-dropdown');
+    const items = div.querySelectorAll('.fason-dropdown-item');
+    items.forEach(item => { item.onclick = () => { searchInput.value = item.textContent; hiddenInput.value = item.textContent; dropdown.classList.remove("open"); }; });
+    searchInput.addEventListener("focus", function() { const val = this.value.toUpperCase(); items.forEach(i => i.style.display = i.textContent.toUpperCase().includes(val) ? "block" : "none"); dropdown.classList.add("open"); });
+    searchInput.addEventListener("input", function() { const val = this.value.toUpperCase(); items.forEach(i => i.style.display = i.textContent.toUpperCase().includes(val) ? "block" : "none"); hiddenInput.value = this.value; });
 }
 
 async function submitForm(e) {
@@ -410,7 +418,12 @@ function closeModal() { document.getElementById('addRecordModal').classList.add(
 
 document.getElementById("formCalisanSearch").addEventListener("focus", function() { const val = this.value.toUpperCase(); document.querySelectorAll("#calisanDropdown .dropdown-item").forEach(i => i.style.display = i.textContent.toUpperCase().includes(val) ? "block" : "none"); document.getElementById("calisanDropdown").classList.add("open"); });
 document.getElementById("formCalisanSearch").addEventListener("input", function() { const val = this.value.toUpperCase(); document.querySelectorAll("#calisanDropdown .dropdown-item").forEach(i => i.style.display = i.textContent.toUpperCase().includes(val) ? "block" : "none"); });
-document.addEventListener("click", e => { if (!document.getElementById("calisanSelectWrapper").contains(e.target)) document.getElementById("calisanDropdown").classList.remove("open"); });
+document.addEventListener("click", e => { 
+    if (!document.getElementById("calisanSelectWrapper").contains(e.target)) document.getElementById("calisanDropdown").classList.remove("open"); 
+    document.querySelectorAll(".fason-select-wrapper").forEach(wrapper => {
+        if (!wrapper.contains(e.target)) wrapper.querySelector(".fason-dropdown").classList.remove("open");
+    });
+});
 
 // =========================================================================
 // 5. ÇEVRİMDIŞI SENKRONİZASYON (OFFLINE SYNC)
