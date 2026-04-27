@@ -66,23 +66,9 @@
             </div>
             <div class="flex items-center gap-3">
                 <div id="lastUpdate" class="text-slate-400 text-xs"></div>
-                <div class="relative">
-                    <button id="fontToggleBtn" onclick="toggleFontPopover(event)" title="Yazı Boyutu" class="flex items-end gap-0 px-2.5 py-1.5 bg-white/5 hover:bg-white/15 rounded-lg font-medium transition border border-white/10 leading-none">
-                        <span class="font-bold text-base">A</span><span class="font-bold text-[11px]">a</span>
-                    </button>
-                    <div id="fontPopover" class="hidden absolute right-0 top-full mt-2 bg-white rounded-xl shadow-xl border border-slate-200 p-3 w-56 z-[60] text-slate-800">
-                        <p class="text-[10px] font-bold text-slate-500 uppercase mb-2 tracking-wide">Yazı Boyutu</p>
-                        <div class="flex items-center justify-between gap-2 mb-3">
-                            <button type="button" onclick="decreaseFont()" title="Küçült" class="w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-lg font-bold text-sm">A−</button>
-                            <div class="flex flex-col items-center">
-                                <span id="fontLevelLabel" class="text-sm font-bold text-slate-700">18px</span>
-                                <span class="text-[10px] text-slate-500">Anlık</span>
-                            </div>
-                            <button type="button" onclick="increaseFont()" title="Büyüt" class="w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-lg font-bold text-base">A+</button>
-                        </div>
-                        <button type="button" onclick="saveFontSize()" class="w-full px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold">Kaydet</button>
-                    </div>
-                </div>
+                <button id="fontToggleBtn" onclick="toggleFontPopover(event)" title="Yazı Boyutu" class="flex items-end gap-0 px-2.5 py-1.5 bg-white/5 hover:bg-white/15 rounded-lg font-medium transition border border-white/10 leading-none">
+                    <span class="font-bold text-base">A</span><span class="font-bold text-[11px]">a</span>
+                </button>
                 <button id="adminToggleBtn" onclick="adminButtonClick()" title="Admin Girişi" class="flex items-center gap-1.5 px-2.5 py-1.5 bg-white/5 hover:bg-white/15 rounded-lg text-xs font-medium transition border border-white/10">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
                     <span id="adminToggleLabel">Admin</span>
@@ -224,6 +210,29 @@
                     <button type="button" id="formDetailEditBtn" class="px-5 py-2 bg-blue-600 text-white rounded-xl font-bold">Düzenle</button>
                     <button type="button" id="formDetailDeleteBtn" class="px-5 py-2 bg-red-600 text-white rounded-xl font-bold">Sil</button>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="fontPopover" class="fixed inset-0 z-[58] hidden">
+    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeFontPopover()"></div>
+    <div class="fixed inset-0 z-10 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-xs">
+            <div class="px-5 py-4 border-b flex items-center justify-between">
+                <h3 class="font-bold text-slate-800 text-base">Yazı Boyutu</h3>
+                <button type="button" onclick="closeFontPopover()" class="text-slate-400 text-2xl leading-none">&times;</button>
+            </div>
+            <div class="p-5">
+                <div class="flex items-center justify-between gap-3 mb-5">
+                    <button type="button" onclick="decreaseFont()" title="Küçült" class="w-14 h-14 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 rounded-xl font-bold text-lg shrink-0">A−</button>
+                    <div class="flex flex-col items-center flex-1">
+                        <span id="fontLevelLabel" class="text-2xl font-black text-slate-800">18px</span>
+                        <span class="text-[11px] text-slate-500 mt-0.5">Anlık önizleme</span>
+                    </div>
+                    <button type="button" onclick="increaseFont()" title="Büyüt" class="w-14 h-14 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 rounded-xl font-bold text-xl shrink-0">A+</button>
+                </div>
+                <button type="button" onclick="saveFontSize()" class="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold">Kaydet</button>
             </div>
         </div>
     </div>
