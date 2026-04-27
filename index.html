@@ -57,6 +57,10 @@
             </div>
             <div class="flex items-center gap-3">
                 <div id="lastUpdate" class="text-slate-400 text-xs"></div>
+                <button onclick="openAdminLogin()" title="Admin Girişi" class="flex items-center gap-1.5 px-2.5 py-1.5 bg-white/5 hover:bg-white/15 rounded-lg text-xs font-medium transition border border-white/10">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                    Admin
+                </button>
                 <button onclick="fetchAllData()" class="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-sm font-medium transition border border-white/20">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                     Yenile
@@ -111,10 +115,67 @@
             <button onclick="openModal()" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md">+ Yeni Kayıt Ekle</button>
         </div>
         <div class="overflow-x-auto max-h-[400px] overflow-y-auto">
-            <table class="w-full text-sm min-w-[900px]">
-                <thead class="bg-slate-100 sticky top-0 z-10"><tr><th class="px-4 py-3 text-left">Tarih</th><th class="px-4 py-3 text-left">Makine & Vardiya</th><th class="px-4 py-3 text-left">Çalışan</th><th class="px-4 py-3 text-left">Fason</th><th class="px-4 py-3 text-right">Üretim</th><th class="px-4 py-3 text-right">Fire</th><th class="px-4 py-3 text-left">Neden/Arıza</th><th class="px-4 py-3 text-right">Duruş</th></tr></thead>
+            <table class="w-full text-sm min-w-[1050px]">
+                <thead class="bg-slate-100 sticky top-0 z-10"><tr><th class="px-4 py-3 text-left">Tarih</th><th class="px-4 py-3 text-left">Makine & Vardiya</th><th class="px-4 py-3 text-left">Çalışan</th><th class="px-4 py-3 text-left">Fason</th><th class="px-4 py-3 text-right">Üretim</th><th class="px-4 py-3 text-right">Fire</th><th class="px-4 py-3 text-left">Fire Nedeni</th><th class="px-4 py-3 text-left">Arıza Türü</th><th class="px-4 py-3 text-right">Duruş</th></tr></thead>
                 <tbody id="dailyTable" class="divide-y divide-slate-100"></tbody>
             </table>
+        </div>
+    </div>
+</div>
+
+<div id="adminLoginModal" class="fixed inset-0 z-[55] hidden">
+    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeAdminLogin()"></div>
+    <div class="fixed inset-0 z-10 overflow-y-auto flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl w-full max-w-sm shadow-xl">
+            <form onsubmit="submitAdminLogin(event)">
+                <div class="bg-slate-50 px-6 py-5 rounded-t-2xl border-b flex justify-between items-center">
+                    <h3 class="text-lg font-bold">Admin Girişi</h3>
+                    <button type="button" onclick="closeAdminLogin()" class="text-slate-400 text-2xl">&times;</button>
+                </div>
+                <div class="p-6">
+                    <label class="block text-sm font-bold mb-2">Şifre</label>
+                    <input type="password" id="adminPasswordInput" required class="w-full px-3 py-2 border rounded-lg" autocomplete="off">
+                </div>
+                <div class="bg-slate-50 px-6 py-4 rounded-b-2xl flex justify-end gap-3 border-t">
+                    <button type="button" onclick="closeAdminLogin()" class="px-5 py-2 border rounded-xl font-bold bg-white">İptal</button>
+                    <button type="submit" class="px-5 py-2 bg-slate-800 text-white rounded-xl font-bold">Giriş</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="adminPanelModal" class="fixed inset-0 z-[45] hidden">
+    <div class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm" onclick="closeAdminPanel()"></div>
+    <div class="fixed inset-0 z-10 overflow-y-auto flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl w-full max-w-6xl shadow-xl">
+            <div class="bg-slate-50 px-6 py-5 rounded-t-2xl border-b flex justify-between items-center">
+                <div>
+                    <h3 class="text-xl font-bold">Admin Paneli</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">Form ID bazlı tüm kayıtlar — düzenle veya sil</p>
+                </div>
+                <button type="button" onclick="closeAdminPanel()" class="text-slate-400 text-2xl">&times;</button>
+            </div>
+            <div class="px-5 py-3 border-b bg-white">
+                <input type="text" id="adminSearchInput" oninput="renderAdminForms()" placeholder="Çalışan, makine, fason veya tarih ara..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
+            </div>
+            <div class="overflow-x-auto max-h-[65vh] overflow-y-auto">
+                <table class="w-full text-sm min-w-[900px]">
+                    <thead class="bg-slate-100 sticky top-0 z-10">
+                        <tr>
+                            <th class="px-3 py-3 text-left text-xs">Form ID</th>
+                            <th class="px-3 py-3 text-left text-xs">Tarih</th>
+                            <th class="px-3 py-3 text-left text-xs">Çalışan</th>
+                            <th class="px-3 py-3 text-left text-xs">Makine (Vardiya)</th>
+                            <th class="px-3 py-3 text-left text-xs">Fasonlar</th>
+                            <th class="px-3 py-3 text-right text-xs">Üretim</th>
+                            <th class="px-3 py-3 text-right text-xs">Fire</th>
+                            <th class="px-3 py-3 text-right text-xs">İşlem</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminFormsTable" class="divide-y divide-slate-100"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
@@ -127,7 +188,7 @@
     <div class="fixed inset-0 z-10 overflow-y-auto flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl w-full max-w-2xl shadow-xl">
             <form id="recordForm" onsubmit="submitForm(event)">
-                <div class="bg-slate-50 px-6 py-5 rounded-t-2xl border-b flex justify-between items-center"><h3 class="text-xl font-bold">Yeni Üretim Dosyası</h3><button type="button" onclick="closeModal()" class="text-slate-400 text-2xl">&times;</button></div>
+                <div class="bg-slate-50 px-6 py-5 rounded-t-2xl border-b flex justify-between items-center"><h3 id="recordModalTitle" class="text-xl font-bold">Yeni Üretim Dosyası</h3><button type="button" onclick="closeModal()" class="text-slate-400 text-2xl">&times;</button></div>
                 
                 <div class="p-6 grid grid-cols-2 gap-4 border-b">
                     <div><label class="block text-sm font-bold mb-1">Tarih</label><input type="date" id="formTarih" required class="w-full px-3 py-2 border rounded-lg"></div>
@@ -165,9 +226,15 @@ const SHEET_ID = "1jm3uOa4Fi2MEl7wFZzzGGtYXneqWxAOaAOaY3KHx7ho";
 
 const OFFLINE_QUEUE_KEY = 'dokumhane_offline_queue';
 
-let joinedData = []; 
+let joinedData = [];
+let masterData = [];
 let constantsList = { calisanlar: [], vardiyalar: [], makineler: [], fasonlar: [], renkler: [], hatalar: [], arizalar: [] };
 let fasonCounter = 0;
+let currentEditFormId = null;
+
+const ADMIN_PASSWORD = "admin123"; // Şifreyi buradan değiştirin
+
+const formatYMD = (v) => { const d = new Date(v); return isNaN(d) ? '' : `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
 
 // =========================================================================
 // 2. VERİ ÇEKME VE İŞLEME
@@ -211,7 +278,7 @@ async function fetchAllData() {
     try {
         const [masterData, detailData, constantsData] = await Promise.all([ 
             fetchSheetData(SHEET_ID, "3", "Ana Form"), 
-            fetchSheetData(SHEET_ID, "2", "Detaylar"), 
+            fetchSheetData(SHEET_ID, "2", "Fason Detayları"),
             fetchSheetData(SHEET_ID, "1", "Sabitler") 
         ]);
 
@@ -253,11 +320,13 @@ function processConstants(data) {
 }
 
 function processJoinedData(master, detail) {
+    masterData = master || [];
     joinedData = [];
     detail.forEach(det => {
         const mas = master.find(m => m["Form ID"] === det["Bağlı Form ID"]);
         if (mas) {
             joinedData.push({
+                formId: mas["Form ID"], detayId: det["Detay ID"],
                 tarih: mas["Tarih"], dateObj: new Date(mas["Tarih"]), vardiya: mas["Vardiya"], makine: mas["Makine"], calisan: mas["Çalışan"], fason: det["Fason Kodu"], renk: det["Renk"], uretim: parseInt(det["Üretilen Adet"]) || 0, fire: parseInt(det["Fire Adedi"]) || 0, neden: det["Fire Nedeni"] || "-", ariza: det["Arıza Türü"] || "-", durus: parseInt(det["Duruş Süresi (Dk)"]) || parseInt(det["Duruş Süresi"]) || 0
             });
         }
@@ -269,8 +338,10 @@ function processJoinedData(master, detail) {
 function setInitialDates() {
     const validDates = joinedData.map(d => d.dateObj).filter(d => !isNaN(d));
     if (validDates.length > 0) {
-        const maxDate = new Date(Math.max(...validDates)); const minDate = new Date(maxDate); minDate.setDate(minDate.getDate() - 30);
-        document.getElementById('startDate').value = minDate.toISOString().split('T')[0]; document.getElementById('endDate').value = maxDate.toISOString().split('T')[0];
+        const maxDate = new Date(Math.max(...validDates));
+        const ymd = `${maxDate.getFullYear()}-${String(maxDate.getMonth()+1).padStart(2,'0')}-${String(maxDate.getDate()).padStart(2,'0')}`;
+        document.getElementById('startDate').value = ymd;
+        document.getElementById('endDate').value = ymd;
     }
 }
 function resetFilters() { setInitialDates(); updateDashboard(); }
@@ -329,7 +400,7 @@ function updateDashboard() {
     Object.keys(employeeGroups).sort((a,b) => employeeGroups[b].uretim - employeeGroups[a].uretim).forEach(k => { eTable.innerHTML += `<tr><td class="px-5 py-2 font-medium">${k}</td><td class="px-5 py-2 text-right font-bold">${employeeGroups[k].uretim}</td><td class="px-5 py-2 text-right text-red-500 font-bold">${employeeGroups[k].fire}</td></tr>`; });
 
     const dTable = document.getElementById('dailyTable'); dTable.innerHTML = ''; let sortedFiltered = [...filtered].sort((a,b) => b.dateObj - a.dateObj);
-    sortedFiltered.forEach(d => { dTable.innerHTML += `<tr><td class="px-4 py-2">${d.tarih}</td><td class="px-4 py-2"><span class="font-bold">${d.makine}</span> <span class="text-xs text-slate-400">(${d.vardiya})</span></td><td class="px-4 py-2">${d.calisan}</td><td class="px-4 py-2">${d.fason} <span class="text-xs text-slate-400">(${d.renk || '-'})</span></td><td class="px-4 py-2 text-right font-bold">${d.uretim}</td><td class="px-4 py-2 text-right font-bold text-red-500">${d.fire > 0 ? d.fire : '-'}</td><td class="px-4 py-2 text-xs text-orange-600">${d.neden !== "-" ? d.neden : (d.ariza !== "-" ? d.ariza : '')}</td><td class="px-4 py-2 text-right">${d.durus > 0 ? d.durus+' dk' : '-'}</td></tr>`; });
+    sortedFiltered.forEach(d => { dTable.innerHTML += `<tr><td class="px-4 py-2">${d.tarih}</td><td class="px-4 py-2"><span class="font-bold">${d.makine}</span> <span class="text-xs text-slate-400">(${d.vardiya})</span></td><td class="px-4 py-2">${d.calisan}</td><td class="px-4 py-2">${d.fason} <span class="text-xs text-slate-400">(${d.renk || '-'})</span></td><td class="px-4 py-2 text-right font-bold">${d.uretim}</td><td class="px-4 py-2 text-right font-bold text-red-500">${d.fire > 0 ? d.fire : '-'}</td><td class="px-4 py-2 text-xs text-orange-600">${d.neden && d.neden !== "-" ? d.neden : ''}</td><td class="px-4 py-2 text-xs text-amber-700">${d.ariza && d.ariza !== "-" ? d.ariza : ''}</td><td class="px-4 py-2 text-right">${d.durus > 0 ? d.durus+' dk' : '-'}</td></tr>`; });
     document.getElementById("dailyCount").innerText = sortedFiltered.length;
 }
 
@@ -361,26 +432,35 @@ function addFasonRow() {
 async function submitForm(e) {
     e.preventDefault(); const btn = document.getElementById('submitBtn');
     if (btn.disabled) return; // Çift tıklamayı engelle
-    
+
     const formTarih = document.getElementById('formTarih').value;
     const formCalisan = document.getElementById('formCalisan').value;
     if(!formCalisan) return alert("Çalışan seçin!");
 
-    // Aynı gün, aynı kişi kontrolü (Günde en fazla 2 kayıt)
-    const formatYMD = (v) => { const d = new Date(v); return isNaN(d) ? '' : `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+    const isEdit = !!currentEditFormId;
     const inputDate = formatYMD(formTarih);
-    
-    const onlineRecordCount = joinedData.filter(d => formatYMD(d.dateObj) === inputDate && d.calisan === formCalisan).length;
+
+    // Form ID bazlı kontrol (Günde en fazla 2 FORM). Düzenleme modunda kendi form ID'sini saymıyoruz.
+    const onlineFormIds = new Set(
+        joinedData
+            .filter(d => formatYMD(d.dateObj) === inputDate && d.calisan === formCalisan && d.formId !== currentEditFormId)
+            .map(d => d.formId)
+    );
     const queue = JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || '[]');
-    const offlineRecordCount = queue.filter(q => q.formData && formatYMD(q.formData.tarih) === inputDate && q.formData.calisan === formCalisan).length;
-    const totalRecordCount = onlineRecordCount + offlineRecordCount;
-    
-    if (totalRecordCount >= 2) {
-        return alert(`Dikkat: ${formCalisan} adına ${formTarih} tarihinde maksimum (2) kayıt sınırına ulaştınız. Bir personel için günde en fazla iki form doldurulabilir!`);
+    const offlineFormCount = queue.filter(q =>
+        q.formData &&
+        formatYMD(q.formData.tarih) === inputDate &&
+        q.formData.calisan === formCalisan &&
+        q.formData.formId !== currentEditFormId
+    ).length;
+    const totalFormCount = onlineFormIds.size + offlineFormCount;
+
+    if (totalFormCount >= 2) {
+        return alert(`Dikkat: ${formCalisan} adına ${formTarih} tarihinde maksimum (2) form sınırına ulaştınız. Bir personel için günde en fazla iki form doldurulabilir!`);
     }
 
-    btn.disabled = true; const originalText = btn.innerText; btn.innerText = "Gönderiliyor...";
-    const formId = 'FRM-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+    btn.disabled = true; const originalText = btn.innerText; btn.innerText = isEdit ? "Güncelleniyor..." : "Gönderiliyor...";
+    const formId = isEdit ? currentEditFormId : ('FRM-' + Math.random().toString(36).substr(2, 6).toUpperCase());
     const formData = { formId: formId, tarih: formTarih, vardiya: document.getElementById('formVardiya').value, makine: document.getElementById('formMakine').value, calisan: formCalisan };
 
     const fasonlar = [];
@@ -389,16 +469,23 @@ async function submitForm(e) {
         const fire = parseInt(row.querySelector(".fason-fire").value) || 0;
         const durus = parseInt(row.querySelector(".fason-durus").value) || 0;
         const fasonKodu = row.querySelector(".fason-kod").value;
-        if(fasonKodu || uretim > 0 || fire > 0 || durus > 0) { 
-            fasonlar.push({ detayId: 'D-' + Math.random().toString(36).substr(2, 6).toUpperCase(), formId: formId, fasonKodu: fasonKodu || "Belirtilmedi", renk: row.querySelector(".fason-renk").value || "-", uretim: uretim, fire: fire, fireNedeni: row.querySelector(".fason-neden").value, arizaTuru: row.querySelector(".fason-ariza").value, durus: durus }); 
+        if(fasonKodu || uretim > 0 || fire > 0 || durus > 0) {
+            fasonlar.push({ detayId: 'D-' + Math.random().toString(36).substr(2, 6).toUpperCase(), formId: formId, fasonKodu: fasonKodu || "Belirtilmedi", renk: row.querySelector(".fason-renk").value || "-", uretim: uretim, fire: fire, fireNedeni: row.querySelector(".fason-neden").value, arizaTuru: row.querySelector(".fason-ariza").value, durus: durus });
         }
     });
     if(fasonlar.length === 0) { alert("Fason girin."); btn.disabled = false; btn.innerText = originalText; return; }
 
-    const payload = { formData: formData, fasonlar: fasonlar };
+    const payload = isEdit
+        ? { action: 'edit', formId: currentEditFormId, formData: formData, fasonlar: fasonlar }
+        : { formData: formData, fasonlar: fasonlar };
     document.getElementById('loadingModal').classList.remove('hidden');
-    
+
     if (!navigator.onLine) {
+        if (isEdit) {
+            document.getElementById('loadingModal').classList.add('hidden');
+            alert("Düzenleme için internet bağlantısı gereklidir.");
+            btn.innerText = originalText; btn.disabled = false; return;
+        }
         saveOffline(payload);
         document.getElementById('loadingModal').classList.add('hidden'); closeModal();
         alert("İnternet bağlantınız yok! Kayıt cihaza kaydedildi, bağlantı geldiğinde otomatik gönderilecek.");
@@ -408,14 +495,36 @@ async function submitForm(e) {
     try {
         const res = await fetch(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
         const data = await res.json();
-        if(data.status === "success") { document.getElementById('loadingModal').classList.add('hidden'); document.getElementById('successModal').classList.remove('hidden'); setTimeout(() => { document.getElementById('successModal').classList.add('hidden'); closeModal(); fetchAllData(); }, 1500); } 
+        if(data.status === "success") { document.getElementById('loadingModal').classList.add('hidden'); document.getElementById('successModal').classList.remove('hidden'); setTimeout(() => { document.getElementById('successModal').classList.add('hidden'); closeModal(); fetchAllData(); }, 1500); }
         else throw new Error(data.message);
-    } catch (err) { saveOffline(payload); document.getElementById('loadingModal').classList.add('hidden'); closeModal(); alert("Sunucuya ulaşılamadı. Kayıt cihaza kaydedildi, bağlantı geldiğinde tekrar denenecek."); } 
+    } catch (err) {
+        document.getElementById('loadingModal').classList.add('hidden');
+        if (isEdit) {
+            alert("Düzenleme başarısız: " + err.message);
+        } else {
+            saveOffline(payload); closeModal();
+            alert("Sunucuya ulaşılamadı. Kayıt cihaza kaydedildi, bağlantı geldiğinde tekrar denenecek.");
+        }
+    }
     finally { btn.innerText = originalText; btn.disabled = false; }
 }
 
-function openModal() { document.getElementById('addRecordModal').classList.remove('hidden'); document.getElementById('formTarih').valueAsDate = new Date(); document.getElementById("fasonContainer").innerHTML = ''; addFasonRow(); }
-function closeModal() { document.getElementById('addRecordModal').classList.add('hidden'); document.getElementById('recordForm').reset(); document.getElementById('formCalisanSearch').value = ''; document.getElementById('formCalisan').value = ''; }
+function openModal() {
+    currentEditFormId = null;
+    document.getElementById('recordModalTitle').innerText = 'Yeni Üretim Dosyası';
+    document.getElementById('addRecordModal').classList.remove('hidden');
+    document.getElementById('formTarih').valueAsDate = new Date();
+    document.getElementById("fasonContainer").innerHTML = '';
+    addFasonRow();
+}
+function closeModal() {
+    document.getElementById('addRecordModal').classList.add('hidden');
+    document.getElementById('recordForm').reset();
+    document.getElementById('formCalisanSearch').value = '';
+    document.getElementById('formCalisan').value = '';
+    currentEditFormId = null;
+    document.getElementById('recordModalTitle').innerText = 'Yeni Üretim Dosyası';
+}
 
 document.getElementById("formCalisanSearch").addEventListener("focus", function() { const val = this.value.toUpperCase(); document.querySelectorAll("#calisanDropdown .dropdown-item").forEach(i => i.style.display = i.textContent.toUpperCase().includes(val) ? "block" : "none"); document.getElementById("calisanDropdown").classList.add("open"); });
 document.getElementById("formCalisanSearch").addEventListener("input", function() { const val = this.value.toUpperCase(); document.querySelectorAll("#calisanDropdown .dropdown-item").forEach(i => i.style.display = i.textContent.toUpperCase().includes(val) ? "block" : "none"); });
@@ -450,6 +559,144 @@ function updateOfflineBadge() {
     const badge = document.getElementById('offlineBadge');
     const count = document.getElementById('offlineCount');
     if(badge && count) { if(queue.length > 0) { count.innerText = queue.length; badge.classList.remove('hidden'); } else { badge.classList.add('hidden'); } }
+}
+
+// =========================================================================
+// 6. ADMIN PANELİ
+// =========================================================================
+function openAdminLogin() {
+    document.getElementById('adminLoginModal').classList.remove('hidden');
+    document.getElementById('adminPasswordInput').value = '';
+    setTimeout(() => document.getElementById('adminPasswordInput').focus(), 50);
+}
+function closeAdminLogin() { document.getElementById('adminLoginModal').classList.add('hidden'); }
+
+function submitAdminLogin(e) {
+    e.preventDefault();
+    const pw = document.getElementById('adminPasswordInput').value;
+    if (pw === ADMIN_PASSWORD) {
+        closeAdminLogin();
+        openAdminPanel();
+    } else {
+        alert("Şifre hatalı.");
+    }
+}
+
+function openAdminPanel() {
+    document.getElementById('adminPanelModal').classList.remove('hidden');
+    document.getElementById('adminSearchInput').value = '';
+    renderAdminForms();
+}
+function closeAdminPanel() { document.getElementById('adminPanelModal').classList.add('hidden'); }
+
+function renderAdminForms() {
+    const groups = {};
+    joinedData.forEach(d => {
+        if (!d.formId) return;
+        if (!groups[d.formId]) {
+            groups[d.formId] = { formId: d.formId, tarih: d.tarih, dateObj: d.dateObj, vardiya: d.vardiya, makine: d.makine, calisan: d.calisan, details: [] };
+        }
+        groups[d.formId].details.push(d);
+    });
+    let forms = Object.values(groups).sort((a,b) => b.dateObj - a.dateObj);
+
+    const q = (document.getElementById('adminSearchInput').value || '').trim().toLowerCase();
+    if (q) {
+        forms = forms.filter(f => {
+            const hay = [f.formId, f.tarih, f.calisan, f.makine, f.vardiya, ...f.details.map(x => x.fason)].join(' ').toLowerCase();
+            return hay.includes(q);
+        });
+    }
+
+    const tbody = document.getElementById('adminFormsTable');
+    tbody.innerHTML = '';
+    if (forms.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="px-3 py-6 text-center text-slate-400 text-sm">Kayıt bulunamadı</td></tr>';
+        return;
+    }
+    forms.forEach(f => {
+        const totalU = f.details.reduce((s,x) => s + x.uretim, 0);
+        const totalF = f.details.reduce((s,x) => s + x.fire, 0);
+        const fasonList = f.details.map(x => x.fason).join(', ');
+        tbody.innerHTML += `<tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 text-xs font-mono text-slate-500">${f.formId}</td>
+            <td class="px-3 py-2 text-xs">${f.tarih}</td>
+            <td class="px-3 py-2 text-xs font-medium">${f.calisan}</td>
+            <td class="px-3 py-2 text-xs">${f.makine} <span class="text-slate-400">(${f.vardiya})</span></td>
+            <td class="px-3 py-2 text-xs text-slate-600">${fasonList}</td>
+            <td class="px-3 py-2 text-right text-xs font-bold">${totalU}</td>
+            <td class="px-3 py-2 text-right text-xs font-bold text-red-500">${totalF}</td>
+            <td class="px-3 py-2 text-right whitespace-nowrap">
+                <button onclick="editForm('${f.formId}')" class="px-2.5 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded text-xs font-bold mr-1">Düzenle</button>
+                <button onclick="deleteForm('${f.formId}')" class="px-2.5 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded text-xs font-bold">Sil</button>
+            </td>
+        </tr>`;
+    });
+}
+
+async function deleteForm(formId) {
+    const formRows = joinedData.filter(d => d.formId === formId);
+    const ozet = formRows.length > 0 ? `${formRows[0].calisan} / ${formRows[0].tarih} / ${formRows[0].makine}` : formId;
+    if (!confirm(`"${formId}" (${ozet}) formu ve bağlı tüm fason detayları silinecek.\n\nEmin misiniz?`)) return;
+
+    if (!navigator.onLine) { alert("Silme için internet bağlantısı gereklidir."); return; }
+
+    document.getElementById('loadingModal').classList.remove('hidden');
+    try {
+        const res = await fetch(WEB_APP_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'delete', formId: formId })
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+            document.getElementById('loadingModal').classList.add('hidden');
+            await fetchAllData();
+            renderAdminForms();
+            alert("Kayıt silindi.");
+        } else {
+            throw new Error(data.message || 'Bilinmeyen hata');
+        }
+    } catch (err) {
+        document.getElementById('loadingModal').classList.add('hidden');
+        alert("Silme başarısız: " + err.message);
+    }
+}
+
+function editForm(formId) {
+    const formRows = joinedData.filter(d => d.formId === formId);
+    if (formRows.length === 0) { alert("Form bulunamadı."); return; }
+    const f = formRows[0];
+
+    closeAdminPanel();
+    currentEditFormId = formId;
+
+    document.getElementById('recordModalTitle').innerText = `Düzenle: ${formId}`;
+    document.getElementById('addRecordModal').classList.remove('hidden');
+
+    // Tarih: dateObj'ten YMD string üret
+    const tarihYMD = formatYMD(f.dateObj) || (f.tarih || '');
+    document.getElementById('formTarih').value = tarihYMD;
+    document.getElementById('formVardiya').value = f.vardiya || '';
+    document.getElementById('formMakine').value = f.makine || '';
+    document.getElementById('formCalisanSearch').value = f.calisan || '';
+    document.getElementById('formCalisan').value = f.calisan || '';
+
+    // Fason satırlarını mevcut detaylarla doldur
+    document.getElementById('fasonContainer').innerHTML = '';
+    formRows.forEach(d => {
+        addFasonRow();
+        const rows = document.querySelectorAll('.fason-entry');
+        const row = rows[rows.length - 1];
+        row.querySelector('.fason-search').value = d.fason || '';
+        row.querySelector('.fason-kod').value = d.fason || '';
+        row.querySelector('.fason-renk').value = d.renk || '';
+        row.querySelector('.fason-uretim').value = d.uretim || 0;
+        row.querySelector('.fason-fire').value = d.fire || 0;
+        row.querySelector('.fason-neden').value = (d.neden && d.neden !== '-') ? d.neden : 'Yok';
+        row.querySelector('.fason-ariza').value = (d.ariza && d.ariza !== '-') ? d.ariza : 'Yok';
+        row.querySelector('.fason-durus').value = d.durus || 0;
+    });
 }
 
 window.onload = () => { fetchAllData(); syncOfflineData(); updateOfflineBadge(); };
