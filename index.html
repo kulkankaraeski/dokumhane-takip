@@ -57,9 +57,9 @@
             </div>
             <div class="flex items-center gap-3">
                 <div id="lastUpdate" class="text-slate-400 text-xs"></div>
-                <button onclick="openAdminLogin()" title="Admin Girişi" class="flex items-center gap-1.5 px-2.5 py-1.5 bg-white/5 hover:bg-white/15 rounded-lg text-xs font-medium transition border border-white/10">
+                <button id="adminToggleBtn" onclick="adminButtonClick()" title="Admin Girişi" class="flex items-center gap-1.5 px-2.5 py-1.5 bg-white/5 hover:bg-white/15 rounded-lg text-xs font-medium transition border border-white/10">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                    Admin
+                    <span id="adminToggleLabel">Admin</span>
                 </button>
                 <button onclick="fetchAllData()" class="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-sm font-medium transition border border-white/20">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
@@ -121,6 +121,41 @@
             </table>
         </div>
     </div>
+
+    <div id="adminPanelSection" class="bg-white rounded-2xl border-2 border-slate-800 mb-6 hidden">
+        <div class="px-5 py-4 border-b bg-slate-800 text-white flex flex-wrap justify-between items-center gap-3 rounded-t-2xl">
+            <div>
+                <h3 class="font-bold text-sm flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                    Ana Form Yönetimi (Admin) — <span id="adminFormCount">0</span> form
+                </h3>
+                <p class="text-xs text-slate-300 mt-0.5">Seçili tarih aralığındaki Form ID'ler. Tıklayın → detay & düzenle/sil</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <input type="text" id="adminSearchInput" oninput="renderAdminForms()" placeholder="Ara..." class="px-3 py-1.5 bg-white/10 placeholder-slate-300 text-white border border-white/20 rounded-lg text-xs outline-none">
+                <button onclick="bulkDeleteForms()" id="adminBulkDeleteBtn" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold disabled:opacity-40 disabled:cursor-not-allowed" disabled>🗑 Seçilenleri Sil (<span id="adminSelectedCount">0</span>)</button>
+                <button onclick="logoutAdmin()" class="px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-lg text-xs font-bold">Çıkış</button>
+            </div>
+        </div>
+        <div class="overflow-x-auto max-h-[450px] overflow-y-auto">
+            <table class="w-full text-sm min-w-[900px]">
+                <thead class="bg-slate-100 sticky top-0 z-10">
+                    <tr>
+                        <th class="px-3 py-3 text-left w-8"><input type="checkbox" id="adminSelectAll" onchange="toggleSelectAll(this.checked)" class="w-4 h-4 cursor-pointer"></th>
+                        <th class="px-3 py-3 text-left text-xs">Form ID</th>
+                        <th class="px-3 py-3 text-left text-xs">Tarih</th>
+                        <th class="px-3 py-3 text-left text-xs">Çalışan</th>
+                        <th class="px-3 py-3 text-left text-xs">Makine (Vardiya)</th>
+                        <th class="px-3 py-3 text-right text-xs">Detay</th>
+                        <th class="px-3 py-3 text-right text-xs">Üretim</th>
+                        <th class="px-3 py-3 text-right text-xs">Fire</th>
+                        <th class="px-3 py-3 text-right text-xs">İşlem</th>
+                    </tr>
+                </thead>
+                <tbody id="adminFormsTable" class="divide-y divide-slate-100"></tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 <div id="adminLoginModal" class="fixed inset-0 z-[55] hidden">
@@ -145,36 +180,24 @@
     </div>
 </div>
 
-<div id="adminPanelModal" class="fixed inset-0 z-[45] hidden">
-    <div class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm" onclick="closeAdminPanel()"></div>
+<div id="formDetailModal" class="fixed inset-0 z-[55] hidden">
+    <div class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm" onclick="closeFormDetail()"></div>
     <div class="fixed inset-0 z-10 overflow-y-auto flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl w-full max-w-6xl shadow-xl">
+        <div class="bg-white rounded-2xl w-full max-w-3xl shadow-xl">
             <div class="bg-slate-50 px-6 py-5 rounded-t-2xl border-b flex justify-between items-center">
                 <div>
-                    <h3 class="text-xl font-bold">Admin Paneli</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">Form ID bazlı tüm kayıtlar — düzenle veya sil</p>
+                    <h3 class="text-xl font-bold" id="formDetailTitle">Form Detayı</h3>
+                    <p class="text-xs text-slate-500 mt-0.5" id="formDetailSubtitle"></p>
                 </div>
-                <button type="button" onclick="closeAdminPanel()" class="text-slate-400 text-2xl">&times;</button>
+                <button type="button" onclick="closeFormDetail()" class="text-slate-400 text-2xl">&times;</button>
             </div>
-            <div class="px-5 py-3 border-b bg-white">
-                <input type="text" id="adminSearchInput" oninput="renderAdminForms()" placeholder="Çalışan, makine, fason veya tarih ara..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
-            </div>
-            <div class="overflow-x-auto max-h-[65vh] overflow-y-auto">
-                <table class="w-full text-sm min-w-[900px]">
-                    <thead class="bg-slate-100 sticky top-0 z-10">
-                        <tr>
-                            <th class="px-3 py-3 text-left text-xs">Form ID</th>
-                            <th class="px-3 py-3 text-left text-xs">Tarih</th>
-                            <th class="px-3 py-3 text-left text-xs">Çalışan</th>
-                            <th class="px-3 py-3 text-left text-xs">Makine (Vardiya)</th>
-                            <th class="px-3 py-3 text-left text-xs">Fasonlar</th>
-                            <th class="px-3 py-3 text-right text-xs">Üretim</th>
-                            <th class="px-3 py-3 text-right text-xs">Fire</th>
-                            <th class="px-3 py-3 text-right text-xs">İşlem</th>
-                        </tr>
-                    </thead>
-                    <tbody id="adminFormsTable" class="divide-y divide-slate-100"></tbody>
-                </table>
+            <div class="p-5" id="formDetailBody"></div>
+            <div class="bg-slate-50 px-6 py-4 rounded-b-2xl flex justify-between items-center border-t">
+                <button type="button" onclick="closeFormDetail()" class="px-5 py-2 border rounded-xl font-bold bg-white">Kapat</button>
+                <div class="flex gap-2">
+                    <button type="button" id="formDetailEditBtn" class="px-5 py-2 bg-blue-600 text-white rounded-xl font-bold">Düzenle</button>
+                    <button type="button" id="formDetailDeleteBtn" class="px-5 py-2 bg-red-600 text-white rounded-xl font-bold">Sil</button>
+                </div>
             </div>
         </div>
     </div>
@@ -402,6 +425,8 @@ function updateDashboard() {
     const dTable = document.getElementById('dailyTable'); dTable.innerHTML = ''; let sortedFiltered = [...filtered].sort((a,b) => b.dateObj - a.dateObj);
     sortedFiltered.forEach(d => { dTable.innerHTML += `<tr><td class="px-4 py-2">${d.tarih}</td><td class="px-4 py-2"><span class="font-bold">${d.makine}</span> <span class="text-xs text-slate-400">(${d.vardiya})</span></td><td class="px-4 py-2">${d.calisan}</td><td class="px-4 py-2">${d.fason} <span class="text-xs text-slate-400">(${d.renk || '-'})</span></td><td class="px-4 py-2 text-right font-bold">${d.uretim}</td><td class="px-4 py-2 text-right font-bold text-red-500">${d.fire > 0 ? d.fire : '-'}</td><td class="px-4 py-2 text-xs text-orange-600">${d.neden && d.neden !== "-" ? d.neden : ''}</td><td class="px-4 py-2 text-xs text-amber-700">${d.ariza && d.ariza !== "-" ? d.ariza : ''}</td><td class="px-4 py-2 text-right">${d.durus > 0 ? d.durus+' dk' : '-'}</td></tr>`; });
     document.getElementById("dailyCount").innerText = sortedFiltered.length;
+
+    if (typeof isAdmin !== 'undefined' && isAdmin) renderAdminForms();
 }
 
 // =========================================================================
@@ -562,8 +587,15 @@ function updateOfflineBadge() {
 }
 
 // =========================================================================
-// 6. ADMIN PANELİ
+// 6. ADMIN MODU — Detaylı Kayıtlar altındaki Ana Form Yönetimi paneli
 // =========================================================================
+let isAdmin = false;
+
+function adminButtonClick() {
+    if (isAdmin) logoutAdmin();
+    else openAdminLogin();
+}
+
 function openAdminLogin() {
     document.getElementById('adminLoginModal').classList.remove('hidden');
     document.getElementById('adminPasswordInput').value = '';
@@ -576,29 +608,62 @@ function submitAdminLogin(e) {
     const pw = document.getElementById('adminPasswordInput').value;
     if (pw === ADMIN_PASSWORD) {
         closeAdminLogin();
-        openAdminPanel();
+        setAdmin(true);
     } else {
         alert("Şifre hatalı.");
     }
 }
 
-function openAdminPanel() {
-    document.getElementById('adminPanelModal').classList.remove('hidden');
-    document.getElementById('adminSearchInput').value = '';
-    renderAdminForms();
+function setAdmin(on) {
+    isAdmin = on;
+    const section = document.getElementById('adminPanelSection');
+    const label = document.getElementById('adminToggleLabel');
+    const btn = document.getElementById('adminToggleBtn');
+    if (on) {
+        section.classList.remove('hidden');
+        label.innerText = 'Çıkış';
+        btn.title = 'Admin Çıkışı';
+        btn.classList.remove('bg-white/5', 'hover:bg-white/15', 'border-white/10');
+        btn.classList.add('bg-emerald-500/20', 'hover:bg-emerald-500/30', 'border-emerald-400/40');
+        renderAdminForms();
+    } else {
+        section.classList.add('hidden');
+        label.innerText = 'Admin';
+        btn.title = 'Admin Girişi';
+        btn.classList.add('bg-white/5', 'hover:bg-white/15', 'border-white/10');
+        btn.classList.remove('bg-emerald-500/20', 'hover:bg-emerald-500/30', 'border-emerald-400/40');
+        document.getElementById('adminFormsTable').innerHTML = '';
+    }
 }
-function closeAdminPanel() { document.getElementById('adminPanelModal').classList.add('hidden'); }
 
-function renderAdminForms() {
+function logoutAdmin() {
+    if (!confirm("Admin modundan çıkmak istiyor musunuz?")) return;
+    setAdmin(false);
+}
+
+// Mevcut tarih filtresine göre Form ID gruplarını üret
+function buildAdminFormGroups() {
+    const startInput = document.getElementById('startDate').value;
+    const endInput = document.getElementById('endDate').value;
+    const start = startInput ? new Date(startInput) : new Date('1900-01-01');
+    const end = endInput ? new Date(endInput) : new Date('2100-01-01');
+    end.setHours(23, 59, 59);
+
     const groups = {};
     joinedData.forEach(d => {
         if (!d.formId) return;
+        if (!(d.dateObj >= start && d.dateObj <= end)) return;
         if (!groups[d.formId]) {
             groups[d.formId] = { formId: d.formId, tarih: d.tarih, dateObj: d.dateObj, vardiya: d.vardiya, makine: d.makine, calisan: d.calisan, details: [] };
         }
         groups[d.formId].details.push(d);
     });
-    let forms = Object.values(groups).sort((a,b) => b.dateObj - a.dateObj);
+    return Object.values(groups).sort((a,b) => b.dateObj - a.dateObj);
+}
+
+function renderAdminForms() {
+    if (!isAdmin) return;
+    let forms = buildAdminFormGroups();
 
     const q = (document.getElementById('adminSearchInput').value || '').trim().toLowerCase();
     if (q) {
@@ -608,37 +673,90 @@ function renderAdminForms() {
         });
     }
 
+    document.getElementById('adminFormCount').innerText = forms.length;
     const tbody = document.getElementById('adminFormsTable');
     tbody.innerHTML = '';
     if (forms.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="px-3 py-6 text-center text-slate-400 text-sm">Kayıt bulunamadı</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="px-3 py-6 text-center text-slate-400 text-sm">Seçili tarih aralığında kayıt yok</td></tr>';
+        document.getElementById('adminSelectAll').checked = false;
+        updateBulkDeleteButton();
         return;
     }
     forms.forEach(f => {
         const totalU = f.details.reduce((s,x) => s + x.uretim, 0);
         const totalF = f.details.reduce((s,x) => s + x.fire, 0);
-        const fasonList = f.details.map(x => x.fason).join(', ');
-        tbody.innerHTML += `<tr class="hover:bg-slate-50">
-            <td class="px-3 py-2 text-xs font-mono text-slate-500">${f.formId}</td>
-            <td class="px-3 py-2 text-xs">${f.tarih}</td>
-            <td class="px-3 py-2 text-xs font-medium">${f.calisan}</td>
-            <td class="px-3 py-2 text-xs">${f.makine} <span class="text-slate-400">(${f.vardiya})</span></td>
-            <td class="px-3 py-2 text-xs text-slate-600">${fasonList}</td>
-            <td class="px-3 py-2 text-right text-xs font-bold">${totalU}</td>
-            <td class="px-3 py-2 text-right text-xs font-bold text-red-500">${totalF}</td>
+        tbody.innerHTML += `<tr class="hover:bg-slate-50 cursor-pointer" data-formid="${f.formId}">
+            <td class="px-3 py-2" onclick="event.stopPropagation()"><input type="checkbox" class="admin-row-cb w-4 h-4 cursor-pointer" data-formid="${f.formId}" onchange="updateBulkDeleteButton()"></td>
+            <td class="px-3 py-2 text-xs font-mono text-slate-500" onclick="openFormDetail('${f.formId}')">${f.formId}</td>
+            <td class="px-3 py-2 text-xs" onclick="openFormDetail('${f.formId}')">${f.tarih}</td>
+            <td class="px-3 py-2 text-xs font-medium" onclick="openFormDetail('${f.formId}')">${f.calisan}</td>
+            <td class="px-3 py-2 text-xs" onclick="openFormDetail('${f.formId}')">${f.makine} <span class="text-slate-400">(${f.vardiya})</span></td>
+            <td class="px-3 py-2 text-right text-xs font-bold" onclick="openFormDetail('${f.formId}')"><span class="inline-flex items-center justify-center min-w-[1.75rem] h-6 px-2 bg-slate-100 text-slate-700 rounded">${f.details.length}</span></td>
+            <td class="px-3 py-2 text-right text-xs font-bold" onclick="openFormDetail('${f.formId}')">${totalU}</td>
+            <td class="px-3 py-2 text-right text-xs font-bold text-red-500" onclick="openFormDetail('${f.formId}')">${totalF}</td>
             <td class="px-3 py-2 text-right whitespace-nowrap">
-                <button onclick="editForm('${f.formId}')" class="px-2.5 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded text-xs font-bold mr-1">Düzenle</button>
-                <button onclick="deleteForm('${f.formId}')" class="px-2.5 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded text-xs font-bold">Sil</button>
+                <button onclick="event.stopPropagation(); openFormDetail('${f.formId}')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-bold mr-1">Detay</button>
+                <button onclick="event.stopPropagation(); deleteForm('${f.formId}')" class="px-2.5 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded text-xs font-bold">Sil</button>
             </td>
         </tr>`;
     });
+    document.getElementById('adminSelectAll').checked = false;
+    updateBulkDeleteButton();
+}
+
+function toggleSelectAll(on) {
+    document.querySelectorAll('.admin-row-cb').forEach(cb => cb.checked = on);
+    updateBulkDeleteButton();
+}
+
+function getSelectedFormIds() {
+    return Array.from(document.querySelectorAll('.admin-row-cb'))
+        .filter(cb => cb.checked)
+        .map(cb => cb.dataset.formid);
+}
+
+function updateBulkDeleteButton() {
+    const ids = getSelectedFormIds();
+    document.getElementById('adminSelectedCount').innerText = ids.length;
+    document.getElementById('adminBulkDeleteBtn').disabled = ids.length === 0;
+}
+
+async function bulkDeleteForms() {
+    const ids = getSelectedFormIds();
+    if (ids.length === 0) return;
+    if (!confirm(`SEÇİLEN ${ids.length} FORM ve bağlı TÜM fason detayları silinecek.\n\nBu işlem geri alınamaz!\n\nEmin misiniz?`)) return;
+    if (!confirm(`Son onay: ${ids.length} form silinecek. Onaylıyor musunuz?`)) return;
+    if (!navigator.onLine) { alert("Silme için internet bağlantısı gereklidir."); return; }
+
+    document.getElementById('loadingModal').classList.remove('hidden');
+    let ok = 0, fail = 0; const errors = [];
+    for (const formId of ids) {
+        try {
+            const res = await fetch(WEB_APP_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ action: 'delete', formId: formId })
+            });
+            const data = await res.json();
+            if (data.status === 'success') ok++;
+            else { fail++; errors.push(`${formId}: ${data.message || 'hata'}`); }
+        } catch (err) {
+            fail++; errors.push(`${formId}: ${err.message}`);
+        }
+    }
+    document.getElementById('loadingModal').classList.add('hidden');
+    await fetchAllData();
+    renderAdminForms();
+    if (fail === 0) alert(`${ok} form başarıyla silindi.`);
+    else alert(`${ok} silindi, ${fail} başarısız:\n${errors.join('\n')}`);
 }
 
 async function deleteForm(formId) {
     const formRows = joinedData.filter(d => d.formId === formId);
     const ozet = formRows.length > 0 ? `${formRows[0].calisan} / ${formRows[0].tarih} / ${formRows[0].makine}` : formId;
-    if (!confirm(`"${formId}" (${ozet}) formu ve bağlı tüm fason detayları silinecek.\n\nEmin misiniz?`)) return;
-
+    const detayCount = formRows.length;
+    if (!confirm(`"${formId}" formu silinecek.\n\n• ${ozet}\n• ${detayCount} fason detay satırı da otomatik silinecek\n\nEmin misiniz?`)) return;
+    if (!confirm(`Son onay: ${formId} ve bağlı ${detayCount} fason detayı silinecek. Onaylıyor musunuz?`)) return;
     if (!navigator.onLine) { alert("Silme için internet bağlantısı gereklidir."); return; }
 
     document.getElementById('loadingModal').classList.remove('hidden');
@@ -651,9 +769,10 @@ async function deleteForm(formId) {
         const data = await res.json();
         if (data.status === 'success') {
             document.getElementById('loadingModal').classList.add('hidden');
+            closeFormDetail();
             await fetchAllData();
             renderAdminForms();
-            alert("Kayıt silindi.");
+            alert(`Form ve ${detayCount} fason detayı silindi.`);
         } else {
             throw new Error(data.message || 'Bilinmeyen hata');
         }
@@ -663,18 +782,56 @@ async function deleteForm(formId) {
     }
 }
 
+function openFormDetail(formId) {
+    const rows = joinedData.filter(d => d.formId === formId);
+    if (rows.length === 0) { alert("Form bulunamadı."); return; }
+    const f = rows[0];
+    const totalU = rows.reduce((s,x) => s + x.uretim, 0);
+    const totalF = rows.reduce((s,x) => s + x.fire, 0);
+    const totalD = rows.reduce((s,x) => s + x.durus, 0);
+
+    document.getElementById('formDetailTitle').innerText = formId;
+    document.getElementById('formDetailSubtitle').innerText = `${f.tarih} • ${f.calisan} • ${f.makine} (${f.vardiya})`;
+
+    let html = `<div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+        <div class="bg-slate-50 rounded-lg p-3"><p class="text-[10px] font-bold text-slate-500 uppercase">Detay Sayısı</p><p class="text-lg font-black">${rows.length}</p></div>
+        <div class="bg-blue-50 rounded-lg p-3"><p class="text-[10px] font-bold text-blue-600 uppercase">Toplam Üretim</p><p class="text-lg font-black text-blue-700">${totalU}</p></div>
+        <div class="bg-red-50 rounded-lg p-3"><p class="text-[10px] font-bold text-red-600 uppercase">Toplam Fire</p><p class="text-lg font-black text-red-700">${totalF}</p></div>
+        <div class="bg-orange-50 rounded-lg p-3"><p class="text-[10px] font-bold text-orange-600 uppercase">Toplam Duruş</p><p class="text-lg font-black text-orange-700">${totalD} dk</p></div>
+    </div>
+    <div class="border rounded-lg overflow-hidden max-h-[40vh] overflow-y-auto">
+    <table class="w-full text-xs">
+        <thead class="bg-slate-100 sticky top-0">
+            <tr><th class="px-3 py-2 text-left">Fason</th><th class="px-3 py-2 text-left">Renk</th><th class="px-3 py-2 text-right">Üretim</th><th class="px-3 py-2 text-right">Fire</th><th class="px-3 py-2 text-left">Fire Nedeni</th><th class="px-3 py-2 text-left">Arıza</th><th class="px-3 py-2 text-right">Duruş</th></tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">`;
+    rows.forEach(r => {
+        html += `<tr><td class="px-3 py-2 font-medium">${r.fason}</td><td class="px-3 py-2 text-slate-500">${r.renk || '-'}</td><td class="px-3 py-2 text-right font-bold">${r.uretim}</td><td class="px-3 py-2 text-right font-bold text-red-500">${r.fire || '-'}</td><td class="px-3 py-2 text-orange-600">${r.neden && r.neden !== '-' ? r.neden : ''}</td><td class="px-3 py-2 text-amber-700">${r.ariza && r.ariza !== '-' ? r.ariza : ''}</td><td class="px-3 py-2 text-right">${r.durus > 0 ? r.durus + ' dk' : '-'}</td></tr>`;
+    });
+    html += '</tbody></table></div>';
+    document.getElementById('formDetailBody').innerHTML = html;
+
+    document.getElementById('formDetailEditBtn').onclick = () => editForm(formId);
+    document.getElementById('formDetailDeleteBtn').onclick = () => deleteForm(formId);
+
+    document.getElementById('formDetailModal').classList.remove('hidden');
+}
+
+function closeFormDetail() {
+    document.getElementById('formDetailModal').classList.add('hidden');
+}
+
 function editForm(formId) {
     const formRows = joinedData.filter(d => d.formId === formId);
     if (formRows.length === 0) { alert("Form bulunamadı."); return; }
     const f = formRows[0];
 
-    closeAdminPanel();
+    closeFormDetail();
     currentEditFormId = formId;
 
     document.getElementById('recordModalTitle').innerText = `Düzenle: ${formId}`;
     document.getElementById('addRecordModal').classList.remove('hidden');
 
-    // Tarih: dateObj'ten YMD string üret
     const tarihYMD = formatYMD(f.dateObj) || (f.tarih || '');
     document.getElementById('formTarih').value = tarihYMD;
     document.getElementById('formVardiya').value = f.vardiya || '';
@@ -682,7 +839,6 @@ function editForm(formId) {
     document.getElementById('formCalisanSearch').value = f.calisan || '';
     document.getElementById('formCalisan').value = f.calisan || '';
 
-    // Fason satırlarını mevcut detaylarla doldur
     document.getElementById('fasonContainer').innerHTML = '';
     formRows.forEach(d => {
         addFasonRow();
